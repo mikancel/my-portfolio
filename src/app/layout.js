@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata = {
@@ -14,6 +15,7 @@ export default function RootLayout({ children }) {
     <link href="https://fonts.googleapis.com/css2?family=LINE+Seed+JP:wght@400;700;800&display=swap" rel="stylesheet" />  </head>
       <body style={{ fontFamily: "'LINESeedJP_OTF', 'LINESeed', sans-serif", margin: 0 }}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
