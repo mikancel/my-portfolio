@@ -1,17 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #ffffff;
+  --text: #111111;
+  --sub: #6b7280;
+  --border: #f3f4f6;
+  --card-bg: #ffffff;
+  --accent: #f68827;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --text: #e8e8e8;
+  --sub: #999999;
+  --border: #2e2e2e;
+  --card-bg: #222222;
+  --accent: #c4854a;
 }
 
 * {
   font-family: 'LINE Seed JP', sans-serif !important;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }

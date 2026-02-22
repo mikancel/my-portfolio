@@ -1,0 +1,110 @@
+.main {
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Nav */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.navLogo {
+  font-weight: bold;
+  font-size: 18px;
+  letter-spacing: -0.5px;
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.navLinks {
+  display: flex;
+  gap: 32px;
+  font-size: 14px;
+  list-style: none;
+}
+
+.navLinks a {
+  color: var(--sub);
+  text-decoration: none;
+}
+
+/* Hero */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 128px 32px;
+}
+
+.hero h1 {
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 40px;
+  line-height: 1.2;
+}
+
+/* Contact */
+.contact {
+  padding: 96px 32px;
+  max-width: 672px;
+  margin: 0 auto;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  color: var(--sub);
+  margin-bottom: 8px;
+  letter-spacing: 4px;
+}
+
+.contact h2 {
+  font-size: 30px;
+  font-weight: bold;
+  margin-bottom: 32px;
+}
+
+.contactLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 24px;
+  text-decoration: none;
+  color: var(--text);
+  background-color: var(--card-bg);
+}
+
+/* Footer */
+.footer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  color: var(--sub);
+  padding: 32px;
+  border-top: 1px solid var(--border);
+}
+
+.themeToggle {
+  position: absolute;
+  right: 32px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--sub);
+}
