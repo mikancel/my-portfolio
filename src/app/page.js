@@ -46,6 +46,10 @@ const toggle = () => {
           <span>X</span>
           <span>&#64;kankitsu_mikan</span>
         </a>
+        <a href="https://github.com/mikancel" target="_blank" className={styles.contactLink}>
+          <span>GitHub</span>
+          <span>mikancel</span>
+        </a>
       </section>
 
       <footer className={styles.footer}>

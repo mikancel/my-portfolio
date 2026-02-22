@@ -64,7 +64,6 @@
   font-size: 12px;
   color: var(--sub);
   margin-bottom: 8px;
-  letter-spacing: 4px;
 }
 
 .contact h2 {
@@ -83,6 +82,11 @@
   text-decoration: none;
   color: var(--text);
   background-color: var(--card-bg);
+  margin-bottom: 8px;
+}
+
+.contactLink span:first-child {
+  font-weight: bold;
 }
 
 /* Footer */
