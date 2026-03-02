@@ -18,15 +18,8 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchLangs() {
-      const repos = await fetch("https://api.github.com/users/mikancel/repos").then(r => r.json());
-      const totals = {};
-      await Promise.all(repos.map(async (repo) => {
-        const data = await fetch(repo.languages_url).then(r => r.json());
-        Object.entries(data).forEach(([lang, bytes]) => {
-          totals[lang] = (totals[lang] || 0) + bytes;
-        });
-      }));
-      setLangs(totals);
+      const data = await fetch("/api/languages").then(r => r.json());
+      if (typeof data === "object") setLangs(data);
     }
     fetchLangs();
   }, []);
