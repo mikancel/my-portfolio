@@ -4,22 +4,40 @@ import styles from "./page.module.css";
 
 export default function Home() {
   const [dark, setDark] = useState(false);
+  const [langs, setLangs] = useState({});
 
-useEffect(() => {
-  const mq = window.matchMedia("(prefers-color-scheme: dark)");
-  const apply = (isDark) => {
-    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
-    setDark(isDark);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = (isDark) => {
+      document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+      setDark(isDark);
+    };
+    apply(mq.matches);
+    mq.addEventListener("change", (e) => apply(e.matches));
+  }, []);
+
+  useEffect(() => {
+    async function fetchLangs() {
+      const repos = await fetch("https://api.github.com/users/mikancel/repos").then(r => r.json());
+      const totals = {};
+      await Promise.all(repos.map(async (repo) => {
+        const data = await fetch(repo.languages_url).then(r => r.json());
+        Object.entries(data).forEach(([lang, bytes]) => {
+          totals[lang] = (totals[lang] || 0) + bytes;
+        });
+      }));
+      setLangs(totals);
+    }
+    fetchLangs();
+  }, []);
+
+  const toggle = () => {
+    const next = !dark;
+    document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
+    setDark(next);
   };
-  apply(mq.matches);
-  mq.addEventListener("change", (e) => apply(e.matches));
-}, []);
 
-const toggle = () => {
-  const next = !dark;
-  document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
-  setDark(next);
-};
+  const total = Object.values(langs).reduce((a, b) => a + b, 0);
 
   return (
     <main className={styles.main}>
@@ -38,6 +56,29 @@ const toggle = () => {
           Welcome to <span className={styles.accent}>mikancel</span>.com
         </h1>
       </section>
+
+      {Object.keys(langs).length > 0 && (
+        <section className={styles.langs}>
+          <p className={styles.sectionLabel}>Languages</p>
+          <h2>使用言語</h2>
+          {Object.entries(langs)
+            .sort((a, b) => b[1] - a[1])
+            .map(([lang, bytes]) => {
+              const pct = Math.round((bytes / total) * 100);
+              return (
+                <div key={lang} className={styles.langItem}>
+                  <div className={styles.langLabel}>
+                    <span>{lang}</span>
+                    <span>{pct}%</span>
+                  </div>
+                  <div className={styles.langBar}>
+                    <div className={styles.langFill} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+        </section>
+      )}
 
       <section id="contact" className={styles.contact}>
         <p className={styles.sectionLabel}>Contact</p>

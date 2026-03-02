@@ -112,3 +112,39 @@
   font-size: 14px;
   color: var(--sub);
 }
+
+.langs {
+  padding: 96px 32px;
+  max-width: 672px;
+  margin: 0 auto;
+}
+
+.langs h2 {
+  font-size: 30px;
+  font-weight: bold;
+  margin-bottom: 32px;
+}
+
+.langItem {
+  margin-bottom: 16px;
+}
+
+.langLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.langBar {
+  height: 6px;
+  background-color: var(--border);
+  border-radius: 999px;
+}
+
+.langFill {
+  height: 6px;
+  background-color: var(--accent);
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
