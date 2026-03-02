@@ -48,8 +48,6 @@ export default function Home() {
         </span>
         <ul className={styles.navLinks}>
           <li><a href="#languages">Languages</a></li>
-        </ul>
-        <ul className={styles.navLinks}>
           <li><a href="#contact">Contact</a></li>
         </ul>
       </nav>
