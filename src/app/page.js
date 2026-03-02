@@ -47,6 +47,9 @@ export default function Home() {
           <span className={styles.accent}>mikancel</span>.com
         </span>
         <ul className={styles.navLinks}>
+          <li><a href="#languages">Languages</a></li>
+        </ul>
+        <ul className={styles.navLinks}>
           <li><a href="#contact">Contact</a></li>
         </ul>
       </nav>
@@ -58,7 +61,7 @@ export default function Home() {
       </section>
 
       {Object.keys(langs).length > 0 && (
-        <section className={styles.langs}>
+        <section id="languages"  className={styles.langs}>
           <p className={styles.sectionLabel}>Languages</p>
           <h2>使用言語</h2>
           {Object.entries(langs)
