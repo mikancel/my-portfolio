@@ -7,17 +7,23 @@
 
 /* Nav */
 .nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 32px;
+  padding: 12px 32px;
   border-bottom: 1px solid var(--border);
+  background-color: var(--bg);
 }
 
 .navLogo {
   font-weight: bold;
   font-size: 18px;
   letter-spacing: -0.5px;
+  text-decoration: none;
+  color: var(--text);
 }
 
 .accent {
@@ -111,6 +117,8 @@
   cursor: pointer;
   font-size: 14px;
   color: var(--sub);
+  width: 60px;
+  text-align: center;
 }
 
 .langs {

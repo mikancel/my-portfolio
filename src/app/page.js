@@ -37,7 +37,9 @@ export default function Home() {
 
       <nav className={styles.nav}>
         <span className={styles.navLogo}>
-          <span className={styles.accent}>mikancel</span>.com
+          <a href="#" className={styles.navLogo}>
+            <span className={styles.accent}>mikancel</span>.com
+          </a>
         </span>
         <ul className={styles.navLinks}>
           <li><a href="#languages">Languages</a></li>
