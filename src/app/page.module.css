@@ -156,3 +156,62 @@
   border-radius: 999px;
   transition: width 0.5s ease;
 }
+
+/* Skeleton */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--border) 25%,
+    var(--card-bg) 50%,
+    var(--border) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 4px;
+}
+
+.skeletonLabel {
+  height: 12px;
+  width: 80px;
+  margin-bottom: 8px;
+}
+
+.skeletonTitle {
+  height: 30px;
+  width: 140px;
+  margin-bottom: 32px;
+}
+
+.skeletonLangItem {
+  margin-bottom: 16px;
+}
+
+.skeletonLangLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  height: 21px;
+}
+
+.skeletonLangName {
+  height: 14px;
+  border-radius: 4px;
+}
+
+.skeletonLangPct {
+  height: 14px;
+  width: 32px;
+  border-radius: 4px;
+}
+
+.skeletonBar {
+  height: 6px;
+  border-radius: 999px;
+  width: 100%;
+}

@@ -2,9 +2,11 @@
 import { useState, useEffect } from "react";
 import styles from "./page.module.css";
 
+const SKELETON_WIDTHS = [65, 85, 45, 75, 55, 90, 40];
+
 export default function Home() {
   const [dark, setDark] = useState(false);
-  const [langs, setLangs] = useState({});
+  const [langs, setLangs] = useState(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -19,7 +21,7 @@ export default function Home() {
   useEffect(() => {
     async function fetchLangs() {
       const data = await fetch("/api/languages").then(r => r.json());
-      if (typeof data === "object") setLangs(data);
+      setLangs(typeof data === "object" ? data : {});
     }
     fetchLangs();
   }, []);
@@ -30,7 +32,7 @@ export default function Home() {
     setDark(next);
   };
 
-  const total = Object.values(langs).reduce((a, b) => a + b, 0);
+  const total = langs ? Object.values(langs).reduce((a, b) => a + b, 0) : 0;
 
   return (
     <main className={styles.main}>
@@ -53,11 +55,25 @@ export default function Home() {
         </h1>
       </section>
 
-      {Object.keys(langs).length > 0 && (
-        <section id="languages" className={styles.langs}>
-          <p className={styles.sectionLabel}>Languages</p>
-          <h2>使用言語</h2>
-          {Object.entries(langs)
+      <section id="languages" className={styles.langs}>
+        <p className={styles.sectionLabel}>Languages</p>
+        <h2>使用言語</h2>
+
+        {langs === null ? (
+          SKELETON_WIDTHS.map((w, i) => (
+            <div key={i} className={styles.skeletonLangItem}>
+              <div className={styles.skeletonLangLabel}>
+                <div
+                  className={`${styles.skeleton} ${styles.skeletonLangName}`}
+                  style={{ width: `${w}px` }}
+                />
+                <div className={`${styles.skeleton} ${styles.skeletonLangPct}`} />
+              </div>
+              <div className={`${styles.skeleton} ${styles.skeletonBar}`} />
+            </div>
+          ))
+        ) : (
+          Object.entries(langs)
             .sort((a, b) => b[1] - a[1])
             .map(([lang, bytes]) => {
               const pct = Math.round((bytes / total) * 100);
@@ -72,9 +88,9 @@ export default function Home() {
                   </div>
                 </div>
               );
-            })}
-        </section>
-      )}
+            })
+        )}
+      </section>
 
       <section id="contact" className={styles.contact}>
         <p className={styles.sectionLabel}>Contact</p>
