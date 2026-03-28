@@ -17,7 +17,7 @@ async rewrites() {
   return {
     beforeFiles: [
       {
-        source: "/:path((?!_next|api|favicon.ico).*)",
+        source: "/:path((?!_next|api|favicon\\.ico).*)",
         has: [{ type: "host", value: "admin.mikancel.com" }],
         destination: "/admin/:path*",
       },
