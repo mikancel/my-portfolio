@@ -1,0 +1,349 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Header */
+.header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  transition: transform 0.25s ease;
+}
+
+.headerVisible { transform: translateY(0); }
+.headerHidden  { transform: translateY(-100%); }
+
+.headerLogo {
+  font-weight: bold;
+  font-size: 15px;
+  text-decoration: none;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.accent { color: var(--accent); }
+
+.tocToggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--sub);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.tocToggle:hover { border-color: var(--accent); color: var(--accent); }
+
+.tocToggleOpen {
+  transform: rotate(180deg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* TOC drawer */
+.tocOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0,0,0,0.3);
+}
+
+.tocDrawer {
+  position: fixed;
+  top: 56px;
+  right: 0;
+  bottom: 0;
+  width: min(320px, 85vw);
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  z-index: 160;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  overflow-y: auto;
+}
+
+.tocOpen { transform: translateX(0); }
+
+.tocInner { padding: 24px; }
+
+.tocTitle {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-bottom: 16px;
+}
+
+.tocList { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+
+.tocLink {
+  font-size: 14px;
+  color: var(--sub);
+  text-decoration: none;
+  line-height: 1.5;
+  display: block;
+  padding: 2px 0;
+  transition: color 0.15s;
+}
+
+.tocLink:hover { color: var(--accent); }
+
+/* Article */
+.article {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-top: 56px;
+}
+
+.heroImg {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+}
+
+.heroPlaceholder {
+  width: 100%;
+  height: 240px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+  font-weight: bold;
+  color: rgba(255,255,255,0.9);
+}
+
+.articleBody { padding: 32px 24px 80px; }
+
+.articleMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tag {
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--border);
+  color: var(--sub);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.tag:hover { background: var(--accent); color: #fff; }
+
+.date { font-size: 13px; color: var(--sub); margin-left: auto; }
+
+.title {
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1.4;
+  margin-bottom: 32px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: var(--sub);
+}
+
+/* Markdown content */
+.content {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.content h1, .content h2, .content h3,
+.content h4, .content h5, .content h6 {
+  font-weight: bold;
+  margin: 2em 0 0.75em;
+  line-height: 1.3;
+}
+
+.content h1 { font-size: 1.6em; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+.content h2 { font-size: 1.35em; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.content h3 { font-size: 1.15em; }
+
+/* 見出し内のリンクを無効化 */
+.content h1 a,
+.content h2 a,
+.content h3 a,
+.content h4 a,
+.content h5 a,
+.content h6 a {
+  color: inherit;
+  text-decoration: none;
+  pointer-events: none;
+}
+
+.content p { margin: 1em 0; }
+
+.content a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.content strong { font-weight: bold; }
+.content em { font-style: italic; }
+
+/* Discord-style: ~~strikethrough~~ */
+.content del {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Code */
+.content code {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.875em;
+  background: var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.content pre {
+  background: #0d1117;
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 1.5em 0;
+}
+
+.content pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.875em;
+  color: #e6edf3;
+}
+
+/* Blockquote (Discord style) */
+.content blockquote {
+  border-left: 4px solid var(--accent);
+  padding: 4px 16px;
+  margin: 1em 0;
+  color: var(--sub);
+}
+
+/* Lists */
+.content ul { list-style: disc; padding-left: 1.5em; margin: 1em 0; }
+.content ol { list-style: decimal; padding-left: 1.5em; margin: 1em 0; }
+.content li { margin: 0.3em 0; }
+
+/* Table */
+.content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.9em;
+}
+
+.content th, .content td {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.content th {
+  background: var(--border);
+  font-weight: bold;
+}
+
+/* Images */
+.content img {
+  max-width: 100%;
+  border-radius: 8px;
+  cursor: zoom-in;
+  display: block;
+  margin: 1.5em auto;
+}
+
+/* Videos */
+.content video {
+  max-width: 100%;
+  border-radius: 8px;
+  cursor: pointer;
+  display: block;
+  margin: 1.5em auto;
+}
+
+/* Horizontal rule */
+.content hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.headerBack {
+  font-size: 15px;
+  font-weight: bold;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.headerSep {
+  color: var(--sub);
+  font-size: 15px;
+}
+
+.footer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  color: var(--sub);
+  padding: 32px;
+  border-top: 1px solid var(--border);
+  margin-top: 64px;
+}
+
+.themeToggle {
+  position: absolute;
+  right: 32px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--sub);
+  width: 60px;
+  text-align: center;
+  font-family: inherit;
+}
+
+.footerHome {
+  position: absolute;
+  left: 32px;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: -0.3px;
+}

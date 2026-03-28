@@ -11,17 +11,18 @@
   top: 0;
   z-index: 100;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  padding: 12px 32px;
+  padding: 0 24px;
+  height: 56px;
   border-bottom: 1px solid var(--border);
   background-color: var(--bg);
 }
 
 .navLogo {
   font-weight: bold;
-  font-size: 18px;
-  letter-spacing: -0.5px;
+  font-size: 15px;
+  letter-spacing: -0.3px;
   text-decoration: none;
   color: var(--text);
 }
@@ -59,68 +60,7 @@
   line-height: 1.2;
 }
 
-/* Contact */
-.contact {
-  padding: 96px 32px;
-  max-width: 672px;
-  margin: 0 auto;
-}
-
-.sectionLabel {
-  font-size: 12px;
-  color: var(--sub);
-  margin-bottom: 8px;
-}
-
-.contact h2 {
-  font-size: 30px;
-  font-weight: bold;
-  margin-bottom: 32px;
-}
-
-.contactLink {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px 24px;
-  text-decoration: none;
-  color: var(--text);
-  background-color: var(--card-bg);
-  margin-bottom: 8px;
-}
-
-.contactLink span:first-child {
-  font-weight: bold;
-}
-
-/* Footer */
-.footer {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 14px;
-  color: var(--sub);
-  padding: 32px;
-  border-top: 1px solid var(--border);
-}
-
-.themeToggle {
-  position: absolute;
-  right: 32px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 4px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--sub);
-  width: 60px;
-  text-align: center;
-}
-
+/* Languages */
 .langs {
   padding: 96px 32px;
   max-width: 672px;
@@ -157,6 +97,74 @@
   transition: width 0.5s ease;
 }
 
+/* Contact / Social */
+.contact {
+  padding: 96px 32px;
+  max-width: 672px;
+  margin: 0 auto;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  color: var(--sub);
+  margin-bottom: 8px;
+}
+
+.contact h2 {
+  font-size: 30px;
+  font-weight: bold;
+  margin-bottom: 32px;
+}
+
+.contactLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 24px;
+  text-decoration: none;
+  color: var(--text);
+  background-color: var(--card-bg);
+  margin-bottom: 8px;
+  transition: border-color 0.15s;
+}
+
+.contactLink:hover {
+  border-color: var(--accent);
+}
+
+.contactLink span:first-child {
+  font-weight: bold;
+}
+
+/* Footer */
+.footer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  color: var(--sub);
+  padding: 32px;
+  border-top: 1px solid var(--border);
+}
+
+.themeToggle {
+  position: absolute;
+  right: 32px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--sub);
+  width: 60px;
+  text-align: center;
+  font-family: inherit;
+}
+
 /* Skeleton */
 @keyframes shimmer {
   0% { background-position: -400px 0; }
@@ -173,18 +181,6 @@
   background-size: 800px 100%;
   animation: shimmer 1.4s infinite linear;
   border-radius: 4px;
-}
-
-.skeletonLabel {
-  height: 12px;
-  width: 80px;
-  margin-bottom: 8px;
-}
-
-.skeletonTitle {
-  height: 30px;
-  width: 140px;
-  margin-bottom: 32px;
 }
 
 .skeletonLangItem {
@@ -214,4 +210,81 @@
   height: 6px;
   border-radius: 999px;
   width: 100%;
+}
+
+/* Blog section */
+.blogSection {
+  padding: 96px 32px;
+  max-width: 672px;
+  margin: 0 auto;
+}
+
+.blogSection h2 {
+  font-size: 30px;
+  font-weight: bold;
+  margin-bottom: 32px;
+}
+
+.blogTitleLink {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.blogList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.blogCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text);
+  transition: background 0.15s;
+}
+
+.blogCard:hover { background: var(--border); }
+
+.blogCardThumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.blogCardThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.blogCardTitle {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.blogMore {
+  display: inline-block;
+  font-size: 14px;
+  color: var(--accent);
+  text-decoration: none;
+  margin-top: 8px;
+}
+
+.blogEmpty {
+  color: var(--sub);
+  font-size: 14px;
 }

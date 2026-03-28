@@ -1,0 +1,92 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+
+.accent { color: var(--accent); }
+
+.desc {
+  font-size: 14px;
+  color: var(--sub);
+}
+
+.btn {
+  width: 100%;
+  padding: 14px 24px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.15s;
+  min-height: 52px;
+}
+
+.btn:hover:not(:disabled) { opacity: 0.85; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.error {
+  font-size: 13px;
+  color: #e53e3e;
+  background: rgba(229,62,62,0.08);
+  border: 1px solid rgba(229,62,62,0.2);
+  border-radius: 8px;
+  padding: 10px 16px;
+  width: 100%;
+}
+
+.success {
+  font-size: 13px;
+  color: #38a169;
+}
+
+.note {
+  font-size: 12px;
+  color: var(--sub);
+  opacity: 0.7;
+}
