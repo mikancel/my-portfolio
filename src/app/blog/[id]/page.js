@@ -12,10 +12,23 @@ function formatDate(dateStr) {
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
 }
 
+const THUMB_COLORS = [
+  "#c4854a", "#7b9e6b", "#6b8fb5", "#9b7bb5",
+  "#b5896b", "#6bb5a8", "#b56b7b", "#8fb56b",
+];
+
+function getColor(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return THUMB_COLORS[Math.abs(hash) % THUMB_COLORS.length];
+}
+
 function Thumbnail({ src, title }) {
   if (!src) {
     return (
-      <div className={styles.heroPlaceholder}>
+      <div className={styles.heroPlaceholder} style={{ background: getColor(title || "") }}>
         <span>{title?.charAt(0) || "?"}</span>
       </div>
     );

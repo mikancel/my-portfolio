@@ -3,18 +3,30 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import styles from "./blog.module.css";
 
+const THUMB_COLORS = [
+  "#c4854a", "#7b9e6b", "#6b8fb5", "#9b7bb5",
+  "#b5896b", "#6bb5a8", "#b56b7b", "#8fb56b",
+];
+
+function getColor(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return THUMB_COLORS[Math.abs(hash) % THUMB_COLORS.length];
+}
+
 function Thumbnail({ thumbnail, title }) {
   if (thumbnail) {
     return <img src={thumbnail} alt={title} className={styles.thumbImg} />;
   }
   const char = title?.charAt(0) || "?";
   return (
-    <div className={styles.thumbPlaceholder}>
+    <div className={styles.thumbPlaceholder} style={{ background: getColor(title || "") }}>
       <span>{char}</span>
     </div>
   );
 }
-
 function formatDate(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
