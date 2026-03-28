@@ -6,7 +6,7 @@ const RP_ID = process.env.WEBAUTHN_RP_ID || "admin.mikancel.com";
 
 export async function POST() {
   try {
-    const credentials = getCredentials();
+    const credentials = await getCredentials();
     if (!credentials.length) {
       return Response.json({ error: "No credentials registered" }, { status: 400 });
     }
@@ -21,7 +21,7 @@ export async function POST() {
       userVerification: "preferred",
     });
 
-    saveChallenge(challengeId, options.challenge);
+    await saveChallenge(challengeId, options.challenge);
     return Response.json({ ...options, challengeId });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });

@@ -1,17 +1,13 @@
-import Database from "better-sqlite3";
-import path from "path";
-import fs from "fs";
-
-const DB_PATH = path.join(process.cwd(), "db", "blog.sqlite");
+import { createClient } from "@libsql/client";
 
 let _db = null;
+
 export function getDb() {
   if (_db) return _db;
-  const dir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  _db = new Database(DB_PATH);
-  _db.pragma("journal_mode = WAL");
-  _db.pragma("foreign_keys = ON");
+  _db = createClient({
+    url: process.env.TURSO_DATABASE_URL || "file:./db/blog.sqlite",
+    authToken: process.env.TURSO_AUTH_TOKEN,
+  });
   return _db;
 }
 
@@ -36,141 +32,159 @@ const POST_SELECT = `
   LEFT JOIN tags t ON t.id = pt.tag_id
 `;
 
-export function getAllPosts(publishedOnly = true) {
+export async function getAllPosts(publishedOnly = true) {
   const db = getDb();
-  const rows = db
-    .prepare(
-      `${POST_SELECT}
-       ${publishedOnly ? "WHERE p.published = 1" : ""}
-       GROUP BY p.id
-       ORDER BY COALESCE(p.published_at, p.created_at) DESC`
-    )
-    .all();
-  return rows.map(parsePostRow);
+  const result = await db.execute(
+    `${POST_SELECT}
+     ${publishedOnly ? "WHERE p.published = 1" : ""}
+     GROUP BY p.id
+     ORDER BY COALESCE(p.published_at, p.created_at) DESC`
+  );
+  return result.rows.map(parsePostRow);
 }
 
-export function getPostById(id, publishedOnly = true) {
+export async function getPostById(id, publishedOnly = true) {
   const db = getDb();
-  const row = db
-    .prepare(
-      `${POST_SELECT}
-       WHERE p.id = ? ${publishedOnly ? "AND p.published = 1" : ""}
-       GROUP BY p.id`
-    )
-    .get(id);
-  return parsePostRow(row);
+  const result = await db.execute({
+    sql: `${POST_SELECT}
+     WHERE p.id = ? ${publishedOnly ? "AND p.published = 1" : ""}
+     GROUP BY p.id`,
+    args: [id],
+  });
+  return parsePostRow(result.rows[0] || null);
 }
 
-export function getLatestPostId() {
+export async function getLatestPostId() {
   const db = getDb();
-  const row = db
-    .prepare(
-      `SELECT id FROM posts WHERE published = 1
-       ORDER BY COALESCE(published_at, created_at) DESC LIMIT 1`
-    )
-    .get();
-  return row?.id ?? null;
+  const result = await db.execute(
+    `SELECT id FROM posts WHERE published = 1
+     ORDER BY COALESCE(published_at, created_at) DESC LIMIT 1`
+  );
+  return result.rows[0]?.id ?? null;
 }
 
-export function createPost({ title, content, thumbnail, published = false, tagIds = [] }) {
+export async function createPost({ title, content, thumbnail, published = false, tagIds = [] }) {
   const db = getDb();
   const publishedAt = published ? new Date().toISOString() : null;
-  const result = db
-    .prepare(`INSERT INTO posts (title, content, thumbnail, published, published_at) VALUES (?,?,?,?,?)`)
-    .run(title, content, thumbnail ?? null, published ? 1 : 0, publishedAt);
+  const result = await db.execute({
+    sql: `INSERT INTO posts (title, content, thumbnail, published, published_at) VALUES (?,?,?,?,?)`,
+    args: [title, content, thumbnail ?? null, published ? 1 : 0, publishedAt],
+  });
   const id = result.lastInsertRowid;
-  if (tagIds.length) syncPostTags(id, tagIds);
+  if (tagIds.length) await syncPostTags(id, tagIds);
   return getPostById(id, false);
 }
 
-export function updatePost(id, { title, content, thumbnail, published, tagIds }) {
+export async function updatePost(id, { title, content, thumbnail, published, tagIds }) {
   const db = getDb();
-  const current = getPostById(id, false);
+  const current = await getPostById(id, false);
   if (!current) throw new Error("Post not found");
 
   const newPublished = published !== undefined ? published : current.published;
   const publishedAt =
     newPublished && !current.published_at ? new Date().toISOString() : current.published_at;
 
-  db.prepare(
-    `UPDATE posts SET title=?, content=?, thumbnail=?, published=?, published_at=? WHERE id=?`
-  ).run(
-    title ?? current.title,
-    content ?? current.content,
-    thumbnail !== undefined ? thumbnail : current.thumbnail,
-    newPublished ? 1 : 0,
-    publishedAt,
-    id
-  );
-  if (tagIds !== undefined) syncPostTags(id, tagIds);
+  await db.execute({
+    sql: `UPDATE posts SET title=?, content=?, thumbnail=?, published=?, published_at=? WHERE id=?`,
+    args: [
+      title ?? current.title,
+      content ?? current.content,
+      thumbnail !== undefined ? thumbnail : current.thumbnail,
+      newPublished ? 1 : 0,
+      publishedAt,
+      id,
+    ],
+  });
+  if (tagIds !== undefined) await syncPostTags(id, tagIds);
   return getPostById(id, false);
 }
 
-export function deletePost(id) {
-  getDb().prepare("DELETE FROM posts WHERE id = ?").run(id);
+export async function deletePost(id) {
+  const db = getDb();
+  await db.execute({ sql: "DELETE FROM posts WHERE id = ?", args: [id] });
 }
 
-function syncPostTags(postId, tagIds) {
+async function syncPostTags(postId, tagIds) {
   const db = getDb();
-  db.prepare("DELETE FROM post_tags WHERE post_id = ?").run(postId);
-  const ins = db.prepare("INSERT OR IGNORE INTO post_tags (post_id, tag_id) VALUES (?,?)");
-  for (const tid of tagIds) ins.run(postId, tid);
+  await db.execute({ sql: "DELETE FROM post_tags WHERE post_id = ?", args: [postId] });
+  for (const tid of tagIds) {
+    await db.execute({
+      sql: "INSERT OR IGNORE INTO post_tags (post_id, tag_id) VALUES (?,?)",
+      args: [postId, tid],
+    });
+  }
 }
 
 // ---- Tags ----
 
-export function getAllTags() {
-  return getDb().prepare("SELECT * FROM tags ORDER BY name").all();
+export async function getAllTags() {
+  const db = getDb();
+  const result = await db.execute("SELECT * FROM tags ORDER BY name");
+  return result.rows;
 }
 
-export function upsertTag(name) {
+export async function upsertTag(name) {
   const db = getDb();
-  const slug = name
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]/g, "");
-  db.prepare("INSERT OR IGNORE INTO tags (name, slug) VALUES (?,?)").run(name, slug);
-  return db.prepare("SELECT * FROM tags WHERE slug = ?").get(slug);
+  const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
+  await db.execute({
+    sql: "INSERT OR IGNORE INTO tags (name, slug) VALUES (?,?)",
+    args: [name, slug],
+  });
+  const result = await db.execute({
+    sql: "SELECT * FROM tags WHERE slug = ?",
+    args: [slug],
+  });
+  return result.rows[0];
 }
 
 // ---- WebAuthn ----
 
-export function saveChallenge(id, challenge, ttlSeconds = 300) {
+export async function saveChallenge(id, challenge, ttlSeconds = 300) {
   const db = getDb();
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
-  db.prepare(
-    "INSERT OR REPLACE INTO webauthn_challenges (id, challenge, expires_at) VALUES (?,?,?)"
-  ).run(id, challenge, expiresAt);
+  await db.execute({
+    sql: "INSERT OR REPLACE INTO webauthn_challenges (id, challenge, expires_at) VALUES (?,?,?)",
+    args: [id, challenge, expiresAt],
+  });
 }
 
-export function getAndDeleteChallenge(id) {
+export async function getAndDeleteChallenge(id) {
   const db = getDb();
-  const row = db.prepare("SELECT * FROM webauthn_challenges WHERE id = ?").get(id);
+  const result = await db.execute({
+    sql: "SELECT * FROM webauthn_challenges WHERE id = ?",
+    args: [id],
+  });
+  const row = result.rows[0];
   if (!row) return null;
-  db.prepare("DELETE FROM webauthn_challenges WHERE id = ?").run(id);
+  await db.execute({ sql: "DELETE FROM webauthn_challenges WHERE id = ?", args: [id] });
   if (new Date(row.expires_at) < new Date()) return null;
   return row.challenge;
 }
 
-export function saveCredential({ id, credentialId, publicKey, counter }) {
-  getDb()
-    .prepare(
-      "INSERT OR REPLACE INTO webauthn_credentials (id, credential_id, public_key, counter) VALUES (?,?,?,?)"
-    )
-    .run(id, credentialId, publicKey, counter);
+export async function saveCredential({ id, credentialId, publicKey, counter }) {
+  const db = getDb();
+  await db.execute({
+    sql: "INSERT OR REPLACE INTO webauthn_credentials (id, credential_id, public_key, counter) VALUES (?,?,?,?)",
+    args: [id, credentialId, publicKey, counter],
+  });
 }
 
-export function getCredentials() {
-  return getDb().prepare("SELECT * FROM webauthn_credentials").all();
+export async function getCredentials() {
+  const db = getDb();
+  const result = await db.execute("SELECT * FROM webauthn_credentials");
+  return result.rows;
 }
 
-export function updateCredentialCounter(credentialId, counter) {
-  getDb()
-    .prepare("UPDATE webauthn_credentials SET counter = ? WHERE credential_id = ?")
-    .run(counter, credentialId);
+export async function updateCredentialCounter(credentialId, counter) {
+  const db = getDb();
+  await db.execute({
+    sql: "UPDATE webauthn_credentials SET counter = ? WHERE credential_id = ?",
+    args: [counter, credentialId],
+  });
 }
 
-export function hasCredentials() {
-  const row = getDb().prepare("SELECT COUNT(*) as cnt FROM webauthn_credentials").get();
-  return row.cnt > 0;
+export async function hasCredentials() {
+  const db = getDb();
+  const result = await db.execute("SELECT COUNT(*) as cnt FROM webauthn_credentials");
+  return result.rows[0].cnt > 0;
 }

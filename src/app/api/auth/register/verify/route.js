@@ -11,7 +11,7 @@ export async function POST(req) {
     const body = await req.json();
     const { challengeId, ...credential } = body;
 
-    const expectedChallenge = getAndDeleteChallenge(challengeId);
+    const expectedChallenge = await getAndDeleteChallenge(challengeId);
     if (!expectedChallenge) {
       return Response.json({ error: "Challenge expired or invalid" }, { status: 400 });
     }
@@ -29,7 +29,7 @@ export async function POST(req) {
 
     const { credential: cred } = verification.registrationInfo;
 
-    saveCredential({
+    await saveCredential({
       id: crypto.randomUUID(),
       credentialId: cred.id,
       publicKey: Buffer.from(cred.publicKey).toString("base64url"),

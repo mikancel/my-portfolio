@@ -5,7 +5,7 @@ export async function GET(req, { params }) {
   const { id } = await params;
   const all = new URL(req.url).searchParams.get("all") === "1";
   try {
-    const post = getPostById(Number(id), !all);
+    const post = await getPostById(Number(id), !all);
     if (!post) return Response.json({ error: "Not found" }, { status: 404 });
     return Response.json(post);
   } catch (e) {
@@ -14,7 +14,7 @@ export async function GET(req, { params }) {
 }
 
 export async function PATCH(req, { params }) {
-  const session = await requireAuth(req, new Response());
+  const session = await requireAuth();
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
@@ -22,9 +22,9 @@ export async function PATCH(req, { params }) {
     const body = await req.json();
     const { tagNames, ...rest } = body;
     const tagIds = tagNames !== undefined
-      ? tagNames.map((name) => upsertTag(name).id)
+      ? await Promise.all(tagNames.map((name) => upsertTag(name).then(t => t.id)))
       : undefined;
-    const post = updatePost(Number(id), { ...rest, tagIds });
+    const post = await updatePost(Number(id), { ...rest, tagIds });
     return Response.json(post);
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
@@ -32,12 +32,12 @@ export async function PATCH(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
-  const session = await requireAuth(req, new Response());
+  const session = await requireAuth();
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
   try {
-    deletePost(Number(id));
+    await deletePost(Number(id));
     return Response.json({ ok: true });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });

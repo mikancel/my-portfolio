@@ -10,15 +10,13 @@ export async function POST(req) {
     const body = await req.json();
     const { challengeId, ...credential } = body;
 
-    const expectedChallenge = getAndDeleteChallenge(challengeId);
+    const expectedChallenge = await getAndDeleteChallenge(challengeId);
     if (!expectedChallenge) {
       return Response.json({ error: "Challenge expired" }, { status: 400 });
     }
 
-    const credentials = getCredentials();
-    const storedCred = credentials.find(
-      (c) => c.credential_id === credential.id
-    );
+    const credentials = await getCredentials();
+    const storedCred = credentials.find((c) => c.credential_id === credential.id);
     if (!storedCred) {
       return Response.json({ error: "Credential not found" }, { status: 400 });
     }
@@ -39,9 +37,9 @@ export async function POST(req) {
       return Response.json({ error: "Verification failed" }, { status: 401 });
     }
 
-    updateCredentialCounter(storedCred.credential_id, verification.authenticationInfo.newCounter);
+    await updateCredentialCounter(storedCred.credential_id, verification.authenticationInfo.newCounter);
 
-    const session = await getSession(req, new Response());
+    const session = await getSession();
     session.isLoggedIn = true;
     await session.save();
 

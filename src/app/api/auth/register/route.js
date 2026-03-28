@@ -8,7 +8,7 @@ const RP_ID = process.env.WEBAUTHN_RP_ID || "admin.mikancel.com";
 export async function POST() {
   try {
     if (process.env.NODE_ENV === "production" && process.env.ALLOW_REGISTRATION !== "1") {
-      if (hasCredentials()) {
+      if (await hasCredentials()) {
         return Response.json({ error: "Registration is closed" }, { status: 403 });
       }
     }
@@ -27,8 +27,7 @@ export async function POST() {
       },
     });
 
-    saveChallenge(challengeId, options.challenge);
-
+    await saveChallenge(challengeId, options.challenge);
     return Response.json({ ...options, challengeId });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
