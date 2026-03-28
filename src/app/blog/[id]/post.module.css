@@ -222,11 +222,11 @@
 }
 
 .content pre {
-  background: #0d1117;
   border-radius: 8px;
   padding: 16px;
   overflow-x: auto;
   margin: 1.5em 0;
+  background: #0d1117;
 }
 
 .content pre code {
@@ -234,6 +234,14 @@
   padding: 0;
   font-size: 0.875em;
   color: #e6edf3;
+}
+
+[data-theme="light"] .content pre {
+  background: #f6f8fa;
+}
+
+[data-theme="light"] .content pre code {
+  color: #24292f;
 }
 
 /* Blockquote (Discord style) */

@@ -23,7 +23,7 @@ export default function EditPostPage({ params }) {
         </Link>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <Link
-            href={`/blog/${id}`}
+            href={`https://mikancel.com/blog/${id}`}
             target="_blank"
             style={{ fontSize: 13, color: "var(--sub)", textDecoration: "none" }}
           >
