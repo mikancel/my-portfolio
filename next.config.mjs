@@ -17,14 +17,24 @@ async rewrites() {
   return {
     beforeFiles: [
       {
-        source: "/:path((?!_next|api|favicon\\.ico).*)",
-        has: [{ type: "host", value: "admin.mikancel.com" }],
-        destination: "/admin/:path*",
-      },
-      {
         source: "/",
         has: [{ type: "host", value: "admin.mikancel.com" }],
         destination: "/admin",
+      },
+      {
+        source: "/login",
+        has: [{ type: "host", value: "admin.mikancel.com" }],
+        destination: "/admin/login",
+      },
+      {
+        source: "/blog",
+        has: [{ type: "host", value: "admin.mikancel.com" }],
+        destination: "/admin/blog",
+      },
+      {
+        source: "/blog/:path*",
+        has: [{ type: "host", value: "admin.mikancel.com" }],
+        destination: "/admin/blog/:path*",
       },
     ],
   };
