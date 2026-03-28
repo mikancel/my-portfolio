@@ -19,8 +19,15 @@
 }
 
 * {
-  font-family: 'LINE Seed JP', sans-serif !important;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+body {
+  font-family: 'LINE Seed JP', sans-serif;
+}
+
+code, pre, kbd, samp {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
 }

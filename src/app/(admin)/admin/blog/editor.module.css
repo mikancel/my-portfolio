@@ -214,3 +214,14 @@
 
 .publishBtn:hover:not(:disabled) { opacity: 0.85; }
 .publishBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.previewContent h1 a,
+.previewContent h2 a,
+.previewContent h3 a,
+.previewContent h4 a,
+.previewContent h5 a,
+.previewContent h6 a {
+  color: inherit;
+  text-decoration: none;
+  pointer-events: none;
+}
