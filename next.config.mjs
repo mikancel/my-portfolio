@@ -13,22 +13,22 @@ const nextConfig = {
     ];
   },
 
-  async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: "/:path*",
-          has: [{ type: "host", value: "admin.mikancel.com" }],
-          destination: "/admin/:path*",
-        },
-        {
-          source: "/",
-          has: [{ type: "host", value: "admin.mikancel.com" }],
-          destination: "/admin",
-        },
-      ],
-    };
-  },
+async rewrites() {
+  return {
+    beforeFiles: [
+      {
+        source: "/:path((?!_next|api|favicon.ico).*)",
+        has: [{ type: "host", value: "admin.mikancel.com" }],
+        destination: "/admin/:path*",
+      },
+      {
+        source: "/",
+        has: [{ type: "host", value: "admin.mikancel.com" }],
+        destination: "/admin",
+      },
+    ],
+  };
+},
 
   async headers() {
     return [
