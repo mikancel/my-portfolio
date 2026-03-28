@@ -90,7 +90,7 @@ export default function Home() {
       <section id="blog" className={styles.blogSection}>
         <p className={styles.sectionLabel}>Blog</p>
         <h2>
-          <a href="https://mikancel.com/blog" className={styles.blogTitleLink}>
+          <a href="https://mikancel.com/blog">
             ブログ
           </a>
         </h2>
@@ -110,7 +110,7 @@ export default function Home() {
             ))
           )}
         </div>
-        <Link href="/blog" className={styles.blogMore}>すべての記事を見る →</Link>
+        <Link href="/blog">すべての記事を見る →</Link>
       </section>
 
       {/* ソーシャル */}
