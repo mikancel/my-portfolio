@@ -9,6 +9,15 @@ const SESSION_OPTIONS = {
 export async function middleware(req) {
   const { pathname, hostname } = req.nextUrl;
 
+  // /adminへの直接アクセスをブロック（本番環境のみ）
+  if (
+    process.env.NODE_ENV === "production" &&
+    pathname.startsWith("/admin") &&
+    hostname !== "admin.mikancel.com"
+  ) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const isAdminDomain =
     hostname === "admin.mikancel.com" ||
     (process.env.NODE_ENV === "development" && pathname.startsWith("/admin"));
@@ -29,13 +38,11 @@ export async function middleware(req) {
     const res = NextResponse.next();
     const session = await getIronSession(req, res, SESSION_OPTIONS);
     if (!session.isLoggedIn) {
-      const loginUrl = new URL("/admin/login", req.url);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL("/admin/login", req.url));
     }
     return res;
   } catch {
-    const loginUrl = new URL("/admin/login", req.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/admin/login", req.url));
   }
 }
 
