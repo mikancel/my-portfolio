@@ -3,27 +3,29 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./editor.module.css";
 
-export default function PostEditor({ postId }) {
+export default function PostEditor({ postId: initialPostId }) {
   const router = useRouter();
-  const isEdit = !!postId;
+  const [postId, setPostId] = useState(initialPostId || null);
+  const isEdit = !!initialPostId;
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [tags, setTags] = useState(""); // comma separated
+  const [tags, setTags] = useState("");
   const [thumbnail, setThumbnail] = useState("");
   const [published, setPublished] = useState(false);
   const [preview, setPreview] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [tab, setTab] = useState("write"); // write | preview
+  const [tab, setTab] = useState("write");
   const textareaRef = useRef(null);
   const previewDebounce = useRef(null);
+  const fileInputRef = useRef(null);
 
-  // 初期ロード（編集時）
   useEffect(() => {
     if (!isEdit) return;
-    fetch(`/api/blog/${postId}?all=1`).then(r => r.json()).then(data => {
+    fetch(`/api/blog/${initialPostId}?all=1`).then(r => r.json()).then(data => {
       if (data.error) return;
       setTitle(data.title || "");
       setContent(data.content || "");
@@ -31,9 +33,8 @@ export default function PostEditor({ postId }) {
       setThumbnail(data.thumbnail || "");
       setPublished(data.published || false);
     });
-  }, [postId, isEdit]);
+  }, [initialPostId, isEdit]);
 
-  // プレビュー更新（debounce）
   const refreshPreview = useCallback(async (md) => {
     if (!md) { setPreview(""); return; }
     setPreviewLoading(true);
@@ -54,14 +55,39 @@ export default function PostEditor({ postId }) {
     return () => clearTimeout(previewDebounce.current);
   }, [content, tab, refreshPreview]);
 
-  // 画像ドロップ
-  const handleDrop = useCallback(async (e) => {
-    e.preventDefault();
-    const files = Array.from(e.dataTransfer?.files || []);
+  // 記事IDを確定する（新規の場合は自動下書き保存）
+  const ensurePostId = useCallback(async () => {
+    if (postId) return postId;
+    if (!title.trim()) {
+      setMessage({ type: "error", text: "タイトルを入力してください" });
+      return null;
+    }
+    const tagNames = tags.split(",").map(t => t.trim()).filter(Boolean);
+    const res = await fetch("/api/blog", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, content, thumbnail: thumbnail || null, published: false, tagNames }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      setMessage({ type: "error", text: data.error });
+      return null;
+    }
+    setPostId(data.id);
+    router.replace(`/admin/blog/${data.id}/edit`);
+    return data.id;
+  }, [postId, title, content, tags, thumbnail, router]);
+
+  // ファイルアップロード処理
+  const uploadFiles = useCallback(async (files) => {
+    const id = await ensurePostId();
+    if (!id) return;
+    setUploading(true);
     for (const file of files) {
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) continue;
       const fd = new FormData();
       fd.append("file", file);
+      fd.append("postId", id);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
       if (data.url) {
@@ -71,9 +97,22 @@ export default function PostEditor({ postId }) {
         insertAtCursor(tag);
       }
     }
-  }, []);
+    setUploading(false);
+  }, [ensurePostId]);
+
+  const handleDrop = useCallback(async (e) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer?.files || []);
+    await uploadFiles(files);
+  }, [uploadFiles]);
 
   const handleDragOver = (e) => e.preventDefault();
+
+  const handleFileSelect = useCallback(async (e) => {
+    const files = Array.from(e.target.files || []);
+    await uploadFiles(files);
+    e.target.value = "";
+  }, [uploadFiles]);
 
   function insertAtCursor(text) {
     const ta = textareaRef.current;
@@ -88,7 +127,6 @@ export default function PostEditor({ postId }) {
     }, 0);
   }
 
-  // ツールバー操作
   const toolbar = [
     { label: "B", action: () => wrapText("**", "**"), title: "太字" },
     { label: "I", action: () => wrapText("*", "*"), title: "斜体" },
@@ -116,13 +154,6 @@ export default function PostEditor({ postId }) {
     }, 0);
   }
 
-  // 画像URL挿入
-  const handleImageUrl = async () => {
-    const url = prompt("画像URLを入力:");
-    if (url) insertAtCursor(`\n![画像](${url})\n`);
-  };
-
-  // 保存
   const handleSave = async (pub = published) => {
     if (!title.trim()) {
       setMessage({ type: "error", text: "タイトルを入力してください" });
@@ -131,14 +162,11 @@ export default function PostEditor({ postId }) {
     setSaving(true);
     setMessage({ type: "", text: "" });
 
-    const tagNames = tags
-      .split(",")
-      .map(t => t.trim())
-      .filter(Boolean);
-
+    const tagNames = tags.split(",").map(t => t.trim()).filter(Boolean);
     const body = { title, content, thumbnail: thumbnail || null, published: pub, tagNames };
-    const url = isEdit ? `/api/blog/${postId}` : "/api/blog";
-    const method = isEdit ? "PATCH" : "POST";
+    const currentId = postId;
+    const url = currentId ? `/api/blog/${currentId}` : "/api/blog";
+    const method = currentId ? "PATCH" : "POST";
 
     const res = await fetch(url, {
       method,
@@ -153,7 +181,8 @@ export default function PostEditor({ postId }) {
     } else {
       setMessage({ type: "success", text: pub ? "公開しました！" : "下書きを保存しました" });
       setPublished(pub);
-      if (!isEdit) {
+      if (!currentId) {
+        setPostId(data.id);
         setTimeout(() => router.replace(`/admin/blog/${data.id}/edit`), 800);
       }
     }
@@ -161,7 +190,6 @@ export default function PostEditor({ postId }) {
 
   return (
     <div className={styles.editor}>
-      {/* タイトル */}
       <input
         className={styles.titleInput}
         placeholder="記事タイトル"
@@ -169,7 +197,6 @@ export default function PostEditor({ postId }) {
         onChange={e => setTitle(e.target.value)}
       />
 
-      {/* メタ情報行 */}
       <div className={styles.metaRow}>
         <input
           className={styles.metaInput}
@@ -185,7 +212,6 @@ export default function PostEditor({ postId }) {
         />
       </div>
 
-      {/* タブ切り替え */}
       <div className={styles.tabs}>
         <button
           className={`${styles.tab} ${tab === "write" ? styles.tabActive : ""}`}
@@ -201,7 +227,6 @@ export default function PostEditor({ postId }) {
         </button>
       </div>
 
-      {/* ツールバー */}
       {tab === "write" && (
         <div className={styles.toolbar}>
           {toolbar.map(t => (
@@ -214,13 +239,25 @@ export default function PostEditor({ postId }) {
               {t.label}
             </button>
           ))}
-          <button className={styles.toolBtn} onClick={handleImageUrl} title="画像URL挿入">
-            🖼
+          <button
+            className={styles.toolBtn}
+            onClick={() => fileInputRef.current?.click()}
+            title="画像・動画を挿入"
+            disabled={uploading}
+          >
+            {uploading ? "..." : "🖼"}
           </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            style={{ display: "none" }}
+            onChange={handleFileSelect}
+          />
         </div>
       )}
 
-      {/* エディタ本体 */}
       {tab === "write" ? (
         <textarea
           ref={textareaRef}
@@ -244,7 +281,6 @@ export default function PostEditor({ postId }) {
         </div>
       )}
 
-      {/* フッター操作 */}
       <div className={styles.footer}>
         <div className={styles.footerLeft}>
           {message.text && (

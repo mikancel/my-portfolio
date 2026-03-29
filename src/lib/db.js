@@ -1,4 +1,5 @@
 import { createClient } from "@libsql/client";
+import { deleteFolderFromR2, deleteFromR2 } from "@/lib/r2";
 
 let _db = null;
 
@@ -75,6 +76,12 @@ export async function createPost({ title, content, thumbnail, published = false,
   return getPostById(id, false);
 }
 
+function extractR2Urls(markdown) {
+  if (!markdown) return [];
+  const regex = /https:\/\/pic\.mikancel\.com\/[^\s)"']+/g;
+  return [...new Set(markdown.match(regex) || [])];
+}
+
 export async function updatePost(id, { title, content, thumbnail, published, tagIds }) {
   const db = getDb();
   const current = await getPostById(id, false);
@@ -83,6 +90,17 @@ export async function updatePost(id, { title, content, thumbnail, published, tag
   const newPublished = published !== undefined ? published : current.published;
   const publishedAt =
     newPublished && !current.published_at ? new Date().toISOString() : current.published_at;
+
+  // 削除された画像をR2から消す
+  if (content !== undefined) {
+    const oldUrls = extractR2Urls(current.content);
+    const newUrls = extractR2Urls(content);
+    const deleted = oldUrls.filter((url) => !newUrls.includes(url));
+    for (const url of deleted) {
+      const key = url.replace("https://pic.mikancel.com/", "");
+      await deleteFromR2(key);
+    }
+  }
 
   await db.execute({
     sql: `UPDATE posts SET title=?, content=?, thumbnail=?, published=?, published_at=? WHERE id=?`,
@@ -96,13 +114,20 @@ export async function updatePost(id, { title, content, thumbnail, published, tag
     ],
   });
   if (tagIds !== undefined) await syncPostTags(id, tagIds);
+
+  // 使われていないタグを削除
+  await db.execute({
+    sql: `DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)`,
+    args: [],
+  });
+
   return getPostById(id, false);
 }
 
 export async function deletePost(id) {
   const db = getDb();
+  await deleteFolderFromR2(`blog/${id}/`);
   await db.execute({ sql: "DELETE FROM posts WHERE id = ?", args: [id] });
-  // 使われていないタグを削除
   await db.execute({
     sql: `DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)`,
     args: [],
