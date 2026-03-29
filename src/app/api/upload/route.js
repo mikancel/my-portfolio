@@ -1,3 +1,6 @@
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 import { requireAuth } from "@/lib/session";
 import { uploadToR2 } from "@/lib/r2";
 
@@ -11,6 +14,10 @@ export async function POST(req) {
     const postId = formData.get("postId");
 
     if (!file) return Response.json({ error: "No file" }, { status: 400 });
+
+    if (file.size > 4.5 * 1024 * 1024) {
+      return Response.json({ error: "ファイルサイズは4.5MB以下にしてください" }, { status: 413 });
+    }
 
     const ext = file.name.split(".").pop();
     const filename = `${Date.now()}.${ext}`;

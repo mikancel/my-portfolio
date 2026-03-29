@@ -30,7 +30,10 @@ export async function POST(req) {
       return Response.json({ error: "title is required" }, { status: 400 });
     }
 
-    const tagIds = await Promise.all(tagNames.map((name) => upsertTag(name).then(t => t.id)));
+    const tagIds = await Promise.all(tagNames.map(async (name) => {
+      const tag = await upsertTag(name);
+      return tag.id;
+    }));
     const post = await createPost({ title, content, thumbnail, published, tagIds });
     return Response.json(post, { status: 201 });
   } catch (e) {

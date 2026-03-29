@@ -2,6 +2,12 @@
 const nextConfig = {
   reactCompiler: true,
 
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "20mb",
+    },
+  },
+
   async redirects() {
     return [
       {
@@ -13,32 +19,32 @@ const nextConfig = {
     ];
   },
 
-async rewrites() {
-  return {
-    beforeFiles: [
-      {
-        source: "/",
-        has: [{ type: "host", value: "admin.mikancel.com" }],
-        destination: "/admin",
-      },
-      {
-        source: "/login",
-        has: [{ type: "host", value: "admin.mikancel.com" }],
-        destination: "/admin/login",
-      },
-      {
-        source: "/blog",
-        has: [{ type: "host", value: "admin.mikancel.com" }],
-        destination: "/admin/blog",
-      },
-      {
-        source: "/blog/:path*",
-        has: [{ type: "host", value: "admin.mikancel.com" }],
-        destination: "/admin/blog/:path*",
-      },
-    ],
-  };
-},
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/",
+          has: [{ type: "host", value: "admin.mikancel.com" }],
+          destination: "/admin",
+        },
+        {
+          source: "/login",
+          has: [{ type: "host", value: "admin.mikancel.com" }],
+          destination: "/admin/login",
+        },
+        {
+          source: "/blog",
+          has: [{ type: "host", value: "admin.mikancel.com" }],
+          destination: "/admin/blog",
+        },
+        {
+          source: "/blog/:path*",
+          has: [{ type: "host", value: "admin.mikancel.com" }],
+          destination: "/admin/blog/:path*",
+        },
+      ],
+    };
+  },
 
   async headers() {
     return [

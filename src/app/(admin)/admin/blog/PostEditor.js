@@ -85,6 +85,10 @@ export default function PostEditor({ postId: initialPostId }) {
     setUploading(true);
     for (const file of files) {
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) continue;
+      if (file.size > 4.5 * 1024 * 1024) {
+        setMessage({ type: "error", text: `${file.name} は4.5MB以上のため、アップロードできません` });
+        continue;
+      }
       const fd = new FormData();
       fd.append("file", file);
       fd.append("postId", id);
@@ -95,6 +99,8 @@ export default function PostEditor({ postId: initialPostId }) {
           ? `\n<video src="${data.url}" controls></video>\n`
           : `\n![${file.name}](${data.url})\n`;
         insertAtCursor(tag);
+      } else if (data.error) {
+        setMessage({ type: "error", text: data.error });
       }
     }
     setUploading(false);
