@@ -102,6 +102,11 @@ export async function updatePost(id, { title, content, thumbnail, published, tag
 export async function deletePost(id) {
   const db = getDb();
   await db.execute({ sql: "DELETE FROM posts WHERE id = ?", args: [id] });
+  // 使われていないタグを削除
+  await db.execute({
+    sql: `DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)`,
+    args: [],
+  });
 }
 
 async function syncPostTags(postId, tagIds) {
