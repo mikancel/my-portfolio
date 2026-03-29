@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, use } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import styles from "./post.module.css";
 import "highlight.js/styles/github-dark.css";
@@ -36,14 +36,19 @@ function Thumbnail({ src, title }) {
   return <img src={src} alt={title} className={styles.heroImg} />;
 }
 
-function TableOfContents({ toc, open, onClose }) {
+function TableOfContents({ toc, open, onClose, title }) {
   return (
     <div className={`${styles.tocDrawer} ${open ? styles.tocOpen : ""}`}>
       <div className={styles.tocInner}>
         <p className={styles.tocTitle}>目次</p>
         <ul className={styles.tocList}>
+          <li>
+            <a href="#" onClick={onClose} className={styles.tocLink} style={{ fontWeight: "bold" }}>
+              {title}
+            </a>
+          </li>
           {toc.map((item) => (
-            <li key={item.id} style={{ paddingLeft: `${(item.level - 1) * 16}px` }}>
+            <li key={item.id} style={{ paddingLeft: `${item.level * 16}px` }}>
               <a href={`#${item.id}`} onClick={onClose} className={styles.tocLink}>
                 {item.text}
               </a>
@@ -112,12 +117,22 @@ export default function PostPage({ params }) {
   }, [lastY]);
 
   useEffect(() => {
+  const onScroll = () => {
+    const y = window.scrollY;
+    setHeaderVisible(tocOpen || y < lastY || y < 60);
+    setLastY(y);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  return () => window.removeEventListener("scroll", onScroll);
+}, [lastY, tocOpen]);
+
+  // lightbox
+  useEffect(() => {
     if (!html) return;
     const container = document.querySelector(`.${styles.content}`);
     if (!container) return;
     const imgs = container.querySelectorAll("img");
     const slides = Array.from(imgs).map((img) => ({ src: img.src }));
-
     const handler = (e) => {
       if (e.target.tagName === "IMG") {
         const idx = Array.from(imgs).indexOf(e.target);
@@ -129,6 +144,66 @@ export default function PostPage({ params }) {
     };
     container.addEventListener("click", handler);
     return () => container.removeEventListener("click", handler);
+  }, [html]);
+
+  // コードブロックツールバー
+  useEffect(() => {
+    if (!html) return;
+    const container = document.querySelector(`.${styles.content}`);
+    if (!container) return;
+
+    container.querySelectorAll("pre").forEach((pre) => {
+      if (pre.querySelector(".code-toolbar")) return;
+      const code = pre.querySelector("code");
+      const lang = code?.className.match(/language-(\w+)/)?.[1] || "";
+
+      const toolbar = document.createElement("div");
+      toolbar.className = "code-toolbar";
+      toolbar.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 12px;
+        background: rgba(255,255,255,0.08);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        font-size: 12px;
+        font-family: Consolas, monospace;
+      `;
+
+      const langLabel = document.createElement("span");
+      langLabel.textContent = lang || "code";
+      langLabel.style.color = "#8b949e";
+
+      const buttons = document.createElement("div");
+      buttons.style.cssText = "display:flex;gap:8px;";
+
+      const wrapBtn = document.createElement("button");
+      wrapBtn.textContent = "折り返し";
+      wrapBtn.style.cssText = `background:none;border:1px solid rgba(255,255,255,0.2);border-radius:4px;color:#8b949e;font-size:11px;padding:2px 8px;cursor:pointer;font-family:inherit;`;
+      let wrapped = false;
+      wrapBtn.onclick = () => {
+        wrapped = !wrapped;
+        code.style.whiteSpace = wrapped ? "pre-wrap" : "pre";
+        wrapBtn.style.color = wrapped ? "#f68827" : "#8b949e";
+      };
+
+      const copyBtn = document.createElement("button");
+      copyBtn.textContent = "コピー";
+      copyBtn.style.cssText = `background:none;border:1px solid rgba(255,255,255,0.2);border-radius:4px;color:#8b949e;font-size:11px;padding:2px 8px;cursor:pointer;font-family:inherit;min-width:55px;text-align:center;`;
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(code?.textContent || "");
+        copyBtn.textContent = "完了";
+        setTimeout(() => { copyBtn.textContent = "コピー"; }, 1500);
+      };
+
+      buttons.appendChild(wrapBtn);
+      buttons.appendChild(copyBtn);
+      toolbar.appendChild(langLabel);
+      toolbar.appendChild(buttons);
+      pre.insertBefore(toolbar, pre.firstChild);
+      pre.style.padding = "0";
+      if (code) code.style.cssText = "display:block;padding:16px;overflow-x:auto;";
+    });
   }, [html]);
 
   if (!post) {
@@ -152,7 +227,7 @@ export default function PostPage({ params }) {
       {tocOpen && (
         <div className={styles.tocOverlay} onClick={() => setTocOpen(false)} />
       )}
-      <TableOfContents toc={toc} open={tocOpen} onClose={() => setTocOpen(false)} />
+      <TableOfContents toc={toc} open={tocOpen} onClose={() => setTocOpen(false)} title={post?.title} />
 
       <article className={styles.article}>
         <Thumbnail src={post.thumbnail} title={post.title} />
@@ -182,7 +257,7 @@ export default function PostPage({ params }) {
         <a href="/" className={styles.footerHome}>
           <span className={styles.accent}>mikancel</span>.com
         </a>
-        <span>© 2026 mikancel.</span>
+        <span className={styles.footerCopy}>© 2026 mikancel.</span>
         <button className={styles.themeToggle} onClick={toggle}>
           {dark ? "Light" : "Dark"}
         </button>

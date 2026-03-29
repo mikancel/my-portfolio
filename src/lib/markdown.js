@@ -2,45 +2,58 @@ import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
-import rehypeSlug from "rehype-slug";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeHighlight from "rehype-highlight";
 import rehypeStringify from "rehype-stringify";
 
-export async function markdownToHtml(markdown) {
-  const result = await unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkRehype, { allowDangerousHtml: true })
-    .use(rehypeSlug)
-    .use(rehypeAutolinkHeadings, { behavior: "wrap" })
-    .use(rehypeHighlight)
-    .use(rehypeStringify, { allowDangerousHtml: true })
-    .process(markdown);
-  return String(result);
-}
+function generateIds(markdown) {
+  const counters = { 1: 0, 2: 0, 3: 0 };
+  const prefixes = { 1: "alpha", 2: "bravo", 3: "charlie" };
+  const map = [];
 
-export function extractToc(markdown) {
   const lines = markdown.split("\n");
-  const toc = [];
-  const idCount = {};
   for (const line of lines) {
     const m = line.match(/^(#{1,3})\s+(.+)/);
     if (m) {
       const level = m[1].length;
-      const text = m[2].replace(/[*_`]/g, "");
-      let id = text
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w-]/g, "");
-      if (idCount[id] !== undefined) {
-        idCount[id]++;
-        id = `${id}-${idCount[id]}`;
-      } else {
-        idCount[id] = 0;
-      }
-      toc.push({ id, text, level });
+      const text = m[2].replace(/[*_`]/g, "").trim();
+      counters[level]++;
+      const id = `${prefixes[level]}${counters[level]}`;
+      map.push({ level, text, id });
     }
   }
-  return toc;
+  return map;
+}
+
+export async function markdownToHtml(markdown) {
+  const ids = generateIds(markdown);
+  let idx = 0;
+
+  const processed = markdown.replace(
+    /^(#{1,3})\s+(.+)$/gm,
+    (_, hashes, text) => {
+      const id = ids[idx]?.id || "heading";
+      idx++;
+      return `${hashes} ${text} {#${id}}`;
+    }
+  );
+
+  const result = await unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeHighlight)
+    .use(rehypeStringify, { allowDangerousHtml: true })
+    .process(processed);
+
+  const html = String(result).replace(
+    /<(h[1-3])>(.+?)\s*\{#([\w-]+)\}<\/h[1-3]>/g,
+    (_, tag, text, id) => `<${tag} id="${id}">${text}</${tag}>`
+  );
+
+  return html;
+}
+
+export function extractToc(markdown) {
+  const ids = generateIds(markdown);
+  return ids.map(({ level, text, id }) => ({ id, text, level }));
 }

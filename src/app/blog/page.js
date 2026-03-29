@@ -27,6 +27,7 @@ function Thumbnail({ thumbnail, title }) {
     </div>
   );
 }
+
 function formatDate(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
@@ -36,14 +37,13 @@ function formatDate(dateStr) {
 export default function BlogIndex() {
   const [posts, setPosts] = useState([]);
   const [tags, setTags] = useState([]);
-  const [activeTag, setActiveTag] = useState(null);
+  const [activeTags, setActiveTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dark, setDark] = useState(false);
 
-  const fetchPosts = useCallback(async (tag) => {
+  const fetchPosts = useCallback(async () => {
     setLoading(true);
-    const url = tag ? `/api/blog?tag=${encodeURIComponent(tag)}` : "/api/blog";
-    const res = await fetch(url);
+    const res = await fetch("/api/blog");
     const data = await res.json();
     setPosts(data.posts || []);
     setTags(data.tags || []);
@@ -51,8 +51,8 @@ export default function BlogIndex() {
   }, []);
 
   useEffect(() => {
-    fetchPosts(activeTag);
-  }, [activeTag, fetchPosts]);
+    fetchPosts();
+  }, [fetchPosts]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -70,6 +70,20 @@ export default function BlogIndex() {
     setDark(next);
   };
 
+  const toggleTag = (id) => {
+    const numId = Number(id);
+    setActiveTags((prev) => {
+      const next = prev.includes(numId) ? prev.filter((s) => s !== numId) : [...prev, numId];
+      return next;
+    });
+  };
+
+  const filteredPosts = activeTags.length === 0
+    ? posts
+    : posts.filter((p) =>
+        activeTags.every((id) => p.tags?.some((t) => Number(t.id) === id))
+      );
+
   return (
     <div className={styles.page}>
       <BlogHeader />
@@ -77,16 +91,16 @@ export default function BlogIndex() {
       <main className={styles.main}>
         <div className={styles.tagFilter}>
           <button
-            className={`${styles.tagBtn} ${!activeTag ? styles.tagBtnActive : ""}`}
-            onClick={() => setActiveTag(null)}
+            className={`${styles.tagBtn} ${activeTags.length === 0 ? styles.tagBtnActive : styles.tagBtnInactive}`}
+            onClick={() => setActiveTags([])}
           >
             すべて
           </button>
           {tags.map((t) => (
             <button
               key={t.id}
-              className={`${styles.tagBtn} ${activeTag === t.slug ? styles.tagBtnActive : ""}`}
-              onClick={() => setActiveTag(activeTag === t.slug ? null : t.slug)}
+              className={`${styles.tagBtn} ${activeTags.includes(Number(t.id)) ? styles.tagBtnActive : ""}`}
+              onClick={() => toggleTag(Number(t.id))}
             >
               {t.name}
             </button>
@@ -104,10 +118,10 @@ export default function BlogIndex() {
                 </div>
               </div>
             ))
-          ) : posts.length === 0 ? (
+          ) : filteredPosts.length === 0 ? (
             <p className={styles.empty}>記事がまだありません</p>
           ) : (
-            posts.map((post) => (
+            filteredPosts.map((post) => (
               <Link key={post.id} href={`/blog/${post.id}`} className={styles.postCard}>
                 <Thumbnail thumbnail={post.thumbnail} title={post.title} />
                 <div className={styles.postMeta}>
@@ -133,7 +147,7 @@ export default function BlogIndex() {
         <a href="/" className={styles.footerHome}>
           <span className={styles.accent}>mikancel</span>.com
         </a>
-        <span>© 2026 mikancel.</span>
+        <span className={styles.footerCopy}>© 2026 mikancel.</span>
         <button className={styles.themeToggle} onClick={toggle}>
           {dark ? "Light" : "Dark"}
         </button>
