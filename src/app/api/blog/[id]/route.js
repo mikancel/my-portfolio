@@ -22,7 +22,10 @@ export async function PATCH(req, { params }) {
     const body = await req.json();
     const { tagNames, ...rest } = body;
     const tagIds = tagNames !== undefined
-      ? await Promise.all(tagNames.map((name) => upsertTag(name).then(t => t.id)))
+      ? await Promise.all(tagNames.map(async (name) => {
+          const tag = await upsertTag(name);
+          return tag.id;
+        }))
       : undefined;
     const post = await updatePost(Number(id), { ...rest, tagIds });
     return Response.json(post);
