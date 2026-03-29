@@ -277,6 +277,12 @@ export default function PostPage({ params }) {
         close={() => setLightbox((v) => ({ ...v, open: false }))}
         slides={lightbox.slides}
         index={lightbox.index}
+        on={{
+          backdropClick: () => setLightbox((v) => ({ ...v, open: false })),
+        }}
+        styles={{
+          container: { backgroundColor: "rgba(0, 0, 0, 0.75)" },
+        }}
       />
     </div>
   );
