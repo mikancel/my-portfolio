@@ -89,11 +89,7 @@ export default function Home() {
       {/* ブログ */}
       <section id="blog" className={styles.blogSection}>
         <p className={styles.sectionLabel}>Blog</p>
-        <h2>
-          <a href="https://mikancel.com/blog">
-            ブログ
-          </a>
-        </h2>
+        <h2>ブログ</h2>
         <div className={styles.blogList}>
           {recentPosts.length === 0 ? (
             <p className={styles.blogEmpty}>記事はまだありません</p>

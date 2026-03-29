@@ -83,9 +83,10 @@
   gap: 16px;
   padding: 16px 12px;
   border-radius: 10px;
+  border: 1px solid var(--border);
   text-decoration: none;
   color: var(--text);
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .postCard:hover { background: var(--border); }
