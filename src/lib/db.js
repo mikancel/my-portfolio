@@ -136,7 +136,7 @@ export async function upsertTag(name) {
     args: [name, slug],
   });
   const result = await db.execute({
-    sql: "SELECT * FROM tags WHERE slug = ?",
+    sql: "SELECT * FROM tags WHERE name = ?",
     args: [slug],
   });
   return result.rows[0];
