@@ -126,6 +126,13 @@ export async function updatePost(id, { title, content, thumbnail, published, tag
 
 export async function deletePost(id) {
   const db = getDb();
+  const result = await db.execute({
+    sql: "SELECT id FROM posts WHERE id = ?",
+    args: [id],
+  });
+  if (result.rows.length === 0) throw new Error("Post not found");
+  if (result.rows.length > 1) throw new Error("Unexpected multiple rows");
+
   await deleteFolderFromR2(`blog/${id}/`);
   await db.execute({ sql: "DELETE FROM posts WHERE id = ?", args: [id] });
   await db.execute({
@@ -149,7 +156,7 @@ async function syncPostTags(postId, tagIds) {
 
 export async function getAllTags() {
   const db = getDb();
-  const result = await db.execute("SELECT * FROM tags ORDER BY name");
+  const result = await db.execute("SELECT id, name, slug FROM tags ORDER BY name");
   return result.rows;
 }
 
@@ -161,7 +168,7 @@ export async function upsertTag(name) {
     args: [name, slug],
   });
   const result = await db.execute({
-    sql: "SELECT * FROM tags WHERE name = ?",
+    sql: "SELECT id, name, slug FROM tags WHERE name = ?",
     args: [name],
   });
   return result.rows[0];
@@ -181,7 +188,7 @@ export async function saveChallenge(id, challenge, ttlSeconds = 300) {
 export async function getAndDeleteChallenge(id) {
   const db = getDb();
   const result = await db.execute({
-    sql: "SELECT * FROM webauthn_challenges WHERE id = ?",
+    sql: "SELECT id, challenge, expires_at FROM webauthn_challenges WHERE id = ?",
     args: [id],
   });
   const row = result.rows[0];
@@ -201,7 +208,7 @@ export async function saveCredential({ id, credentialId, publicKey, counter }) {
 
 export async function getCredentials() {
   const db = getDb();
-  const result = await db.execute("SELECT * FROM webauthn_credentials");
+  const result = await db.execute("SELECT id, credential_id, public_key, counter FROM webauthn_credentials");
   return result.rows;
 }
 
