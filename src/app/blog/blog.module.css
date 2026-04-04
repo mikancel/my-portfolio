@@ -60,8 +60,6 @@
   font-family: inherit;
 }
 
-.tagBtn:hover { border-color: var(--accent)}
-
 .tagBtnActive {
   background: var(--accent);
   border-color: var(--accent);
@@ -130,6 +128,7 @@
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;          /* 追加 */
   -webkit-box-orient: vertical;
 }
 

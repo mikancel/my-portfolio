@@ -244,7 +244,7 @@ export default function PostPage({ params }) {
         <div className={styles.articleBody}>
           <div className={styles.articleMeta}>
             {post.tags?.map((t) => (
-              <Link key={t.id} href={`/blog?tag=${t.slug}`} className={styles.tag}>
+              <Link key={t.id} href={`/blog?tag=${t.id}`} className={styles.tag}>
                 {t.name}
               </Link>
             ))}

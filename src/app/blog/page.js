@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./blog.module.css";
 
@@ -49,6 +50,9 @@ export default function BlogIndex() {
   const [loading, setLoading] = useState(true);
   const [dark, setDark] = useState(false);
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/blog");
@@ -61,6 +65,11 @@ export default function BlogIndex() {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  useEffect(() => {
+    const ids = searchParams.getAll("tag").map(Number).filter(Boolean);
+    if (ids.length > 0) setActiveTags(ids);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -78,13 +87,18 @@ export default function BlogIndex() {
     setDark(next);
   };
 
-  const toggleTag = (id) => {
-    const numId = Number(id);
-    setActiveTags((prev) => {
-      const next = prev.includes(numId) ? prev.filter((s) => s !== numId) : [...prev, numId];
-      return next;
-    });
-  };
+const toggleTag = (id) => {
+  const numId = Number(id);
+  const next = activeTags.includes(numId)
+    ? activeTags.filter((s) => s !== numId)
+    : [...activeTags, numId];
+  
+  setActiveTags(next);
+  
+  const params = new URLSearchParams();
+  next.forEach((t) => params.append("tag", t));
+  router.replace(`/blog${next.length > 0 ? `?${params}` : ""}`, { scroll: false });
+};
 
   const filteredPosts = activeTags.length === 0
     ? posts
@@ -100,7 +114,10 @@ export default function BlogIndex() {
         <div className={styles.tagFilter}>
           <button
             className={`${styles.tagBtn} ${activeTags.length === 0 ? styles.tagBtnActive : styles.tagBtnInactive}`}
-            onClick={() => setActiveTags([])}
+            onClick={() => {
+              setActiveTags([]);
+              router.replace("/blog", { scroll: false });
+            }}
           >
             すべて
           </button>

@@ -44,8 +44,6 @@
   font-family: inherit;
 }
 
-.tocToggle:hover { border-color: var(--accent); color: var(--accent); }
-
 .tocToggleOpen {
   transform: rotate(180deg);
   border-color: var(--accent);
