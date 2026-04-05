@@ -72,7 +72,7 @@ export default function AdminBlog() {
         ) : (
           <div className={styles.postList}>
             {posts.map(post => (
-              <div key={post.id} className={styles.postRow}>
+              <div key={post.id} className={styles.postRow} onClick={() => router.push(`/admin/blog/${post.id}/edit`)} style={{ cursor: "pointer" }}>
                 <div className={styles.postInfo}>
                   <span className={`${styles.badge} ${post.published ? styles.badgePublished : styles.badgeDraft}`}>
                     {post.published ? "公開" : "下書き"}
@@ -87,7 +87,7 @@ export default function AdminBlog() {
                     ))}
                   </div>
                   <time className={styles.postDate}>{formatDate(post.updated_at)}</time>
-                  <div className={styles.postActions}>
+                  <div className={styles.postActions} onClick={e => e.stopPropagation()}>
                     <Link href={`/admin/blog/${post.id}/edit`} className={styles.actionBtn}>
                       編集
                     </Link>
