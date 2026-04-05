@@ -9,16 +9,15 @@ import styles from "./login.module.css";
 
 export default function AdminLogin() {
   const router = useRouter();
-  const [status, setStatus] = useState("idle"); // idle | loading | error | success
+  const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const [hasCredentials, setHasCredentials] = useState(null);
+  const [token, setToken] = useState("");
 
   useEffect(() => {
-    // すでにログイン済みか確認
     fetch("/api/auth/session").then((r) => r.json()).then((d) => {
       if (d.isLoggedIn) router.replace("/admin/blog");
     });
-    // パスキー登録済みか確認
     fetch("/api/auth/authenticate", { method: "POST" })
       .then((r) => r.json())
       .then((d) => setHasCredentials(!d.error))
@@ -30,7 +29,6 @@ export default function AdminLogin() {
     setMessage("");
     try {
       if (hasCredentials) {
-        // 認証フロー
         const optRes = await fetch("/api/auth/authenticate", { method: "POST" });
         const opts = await optRes.json();
         if (opts.error) throw new Error(opts.error);
@@ -44,8 +42,15 @@ export default function AdminLogin() {
         const ver = await verRes.json();
         if (!ver.ok) throw new Error(ver.error || "認証失敗");
       } else {
-        // 登録フロー（初回）
-        const optRes = await fetch("/api/auth/register", { method: "POST" });
+        if (!token.trim()) {
+          throw new Error("登録トークンを入力してください");
+        }
+
+        const optRes = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
         const opts = await optRes.json();
         if (opts.error) throw new Error(opts.error);
 
@@ -78,6 +83,16 @@ export default function AdminLogin() {
             ? "パスキーを登録してください"
             : "パスキーで認証してください"}
         </p>
+
+        {hasCredentials === false && (
+          <input
+            className={styles.tokenInput}
+            type="password"
+            placeholder="登録トークン"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+          />
+        )}
 
         <button
           className={styles.btn}

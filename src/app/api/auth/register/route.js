@@ -1,16 +1,16 @@
 import { generateRegistrationOptions } from "@simplewebauthn/server";
-import { saveChallenge, hasCredentials } from "@/lib/db";
+import { saveChallenge } from "@/lib/db";
 import crypto from "crypto";
 
 const RP_NAME = "mikancel admin";
 const RP_ID = process.env.WEBAUTHN_RP_ID || "admin.mikancel.com";
 
-export async function POST() {
+export async function POST(req) {
   try {
-    if (process.env.NODE_ENV === "production" && process.env.ALLOW_REGISTRATION !== "1") {
-      if (await hasCredentials()) {
-        return Response.json({ error: "Registration is closed" }, { status: 403 });
-      }
+    const { token } = await req.json();
+
+    if (!token || token !== process.env.REGISTRATION_TOKEN) {
+      return Response.json({ error: "Invalid token" }, { status: 403 });
     }
 
     const challengeId = crypto.randomUUID();
