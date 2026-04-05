@@ -22,6 +22,7 @@ export default function PostEditor({ postId: initialPostId }) {
   const textareaRef = useRef(null);
   const previewDebounce = useRef(null);
   const fileInputRef = useRef(null);
+  const thumbInputRef = useRef(null);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -55,7 +56,6 @@ export default function PostEditor({ postId: initialPostId }) {
     return () => clearTimeout(previewDebounce.current);
   }, [content, tab, refreshPreview]);
 
-  // 記事IDを確定する（新規の場合は自動下書き保存）
   const ensurePostId = useCallback(async () => {
     if (postId) return postId;
     if (!title.trim()) {
@@ -78,8 +78,7 @@ export default function PostEditor({ postId: initialPostId }) {
     return data.id;
   }, [postId, title, content, tags, thumbnail, router]);
 
-  // ファイルアップロード処理
-  const uploadFiles = useCallback(async (files) => {
+  const uploadFiles = useCallback(async (files, isThumbnail = false) => {
     const id = await ensurePostId();
     if (!id) return;
     setUploading(true);
@@ -89,18 +88,41 @@ export default function PostEditor({ postId: initialPostId }) {
         setMessage({ type: "error", text: `${file.name} は4.5MB以上のため、アップロードできません` });
         continue;
       }
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("postId", id);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          postId: id,
+          isThumbnail,
+        }),
+      });
       const data = await res.json();
-      if (data.url) {
-        const tag = file.type.startsWith("video/")
-          ? `\n<video src="${data.url}" controls></video>\n`
-          : `\n![${file.name}](${data.url})\n`;
-        insertAtCursor(tag);
-      } else if (data.error) {
+      if (data.error) {
         setMessage({ type: "error", text: data.error });
+        continue;
+      }
+
+      const putRes = await fetch(data.url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!putRes.ok) {
+        setMessage({ type: "error", text: "アップロードに失敗しました" });
+        continue;
+      }
+
+      if (isThumbnail) {
+        setThumbnail(data.publicUrl);
+        setMessage({ type: "success", text: "サムネイルを設定しました" });
+      } else {
+        const tag = file.type.startsWith("video/")
+          ? `\n<video src="${data.publicUrl}" controls></video>\n`
+          : `\n![${file.name}](${data.publicUrl})\n`;
+        insertAtCursor(tag);
       }
     }
     setUploading(false);
@@ -210,12 +232,39 @@ export default function PostEditor({ postId: initialPostId }) {
           value={tags}
           onChange={e => setTags(e.target.value)}
         />
-        <input
-          className={styles.metaInput}
-          placeholder="サムネイルURL（任意）"
-          value={thumbnail}
-          onChange={e => setThumbnail(e.target.value)}
-        />
+        <div className={styles.thumbnailRow}>
+          {thumbnail && (
+            <img src={thumbnail} alt="thumbnail" className={styles.thumbnailPreview} />
+          )}
+          <button
+            className={styles.thumbnailBtn}
+            onClick={() => thumbInputRef.current?.click()}
+            disabled={uploading}
+            type="button"
+          >
+            {thumbnail ? "変更" : "サムネイル設定"}
+          </button>
+          {thumbnail && (
+            <button
+              className={styles.thumbnailRemoveBtn}
+              onClick={() => setThumbnail("")}
+              type="button"
+            >
+              削除
+            </button>
+          )}
+          <input
+            ref={thumbInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const files = Array.from(e.target.files || []);
+              uploadFiles(files, true);
+              e.target.value = "";
+            }}
+          />
+        </div>
       </div>
 
       <div className={styles.tabs}>

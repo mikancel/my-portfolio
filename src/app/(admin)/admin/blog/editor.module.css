@@ -27,6 +27,52 @@
   border-bottom: 1px solid var(--border);
 }
 
+.thumbnailRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.thumbnailPreview {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.thumbnailBtn {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.thumbnailBtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.thumbnailBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.thumbnailRemoveBtn {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  color: #e53e3e;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.thumbnailRemoveBtn:hover { border-color: #e53e3e; }
+
 .metaInput {
   flex: 1;
   padding: 7px 12px;
