@@ -1,45 +1,45 @@
-"use client";
-import { useState, useEffect } from "react";
+import { getAllPosts } from "@/lib/db";
 import Link from "next/link";
 import styles from "./page.module.css";
+import HomeClient from "./HomeClient";
+
+export const revalidate = false;
 
 const SKELETON_WIDTHS = [65, 85, 45, 75, 55, 90, 40];
 
-export default function Home() {
-  const [dark, setDark] = useState(false);
-  const [langs, setLangs] = useState(null);
-  const [recentPosts, setRecentPosts] = useState([]);
+async function getLanguages() {
+  const token = process.env.GITHUB_TOKEN;
+  const repos = await fetch("https://api.github.com/users/mikancel/repos", {
+    headers: { Authorization: `Bearer ${token}` },
+    next: { revalidate: 3600 },
+  }).then((r) => r.json());
 
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = (isDark) => {
-      document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
-      setDark(isDark);
-    };
-    apply(mq.matches);
-    mq.addEventListener("change", (e) => apply(e.matches));
-  }, []);
+  if (!Array.isArray(repos)) return {};
 
-  useEffect(() => {
-    fetch("/api/languages").then((r) => r.json()).then((data) => {
-      setLangs(typeof data === "object" ? data : {});
-    });
-  }, []);
+  const totals = {};
+  await Promise.all(
+    repos.map(async (repo) => {
+      const data = await fetch(repo.languages_url, {
+        headers: { Authorization: `Bearer ${token}` },
+        next: { revalidate: 3600 },
+      }).then((r) => r.json());
+      Object.entries(data).forEach(([lang, bytes]) => {
+        totals[lang] = (totals[lang] || 0) + bytes;
+      });
+    })
+  );
 
-  useEffect(() => {
-    fetch("/api/blog")
-      .then((r) => r.json())
-      .then((d) => setRecentPosts(d.posts?.slice(0, 3) || []))
-      .catch(() => {});
-  }, []);
+  return totals;
+}
 
-  const toggle = () => {
-    const next = !dark;
-    document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
-    setDark(next);
-  };
+export default async function Home() {
+  const [posts, langs] = await Promise.all([
+    getAllPosts(true),
+    getLanguages(),
+  ]);
 
-  const total = langs ? Object.values(langs).reduce((a, b) => a + b, 0) : 0;
+  const recentPosts = posts.slice(0, 3);
+  const total = Object.values(langs).reduce((a, b) => a + b, 0);
 
   return (
     <main className={styles.main}>
@@ -53,40 +53,26 @@ export default function Home() {
         <h1>Welcome to <span className={styles.accent}>mikancel</span>.com</h1>
       </section>
 
-      {/* 言語 */}
       <section id="languages" className={styles.langs}>
         <p className={styles.sectionLabel}>Languages</p>
         <h2>使用言語</h2>
-        {langs === null ? (
-          SKELETON_WIDTHS.map((w, i) => (
-            <div key={i} className={styles.skeletonLangItem}>
-              <div className={styles.skeletonLangLabel}>
-                <div className={`${styles.skeleton} ${styles.skeletonLangName}`} style={{ width: `${w}px` }} />
-                <div className={`${styles.skeleton} ${styles.skeletonLangPct}`} />
-              </div>
-              <div className={`${styles.skeleton} ${styles.skeletonBar}`} />
-            </div>
-          ))
-        ) : (
-          Object.entries(langs)
-            .sort((a, b) => b[1] - a[1])
-            .map(([lang, bytes]) => {
-              const pct = Math.round((bytes / total) * 100);
-              return (
-                <div key={lang} className={styles.langItem}>
-                  <div className={styles.langLabel}>
-                    <span>{lang}</span><span>{pct}%</span>
-                  </div>
-                  <div className={styles.langBar}>
-                    <div className={styles.langFill} style={{ width: `${pct}%` }} />
-                  </div>
+        {Object.entries(langs)
+          .sort((a, b) => b[1] - a[1])
+          .map(([lang, bytes]) => {
+            const pct = Math.round((bytes / total) * 100);
+            return (
+              <div key={lang} className={styles.langItem}>
+                <div className={styles.langLabel}>
+                  <span>{lang}</span><span>{pct}%</span>
                 </div>
-              );
-            })
-        )}
+                <div className={styles.langBar}>
+                  <div className={styles.langFill} style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            );
+          })}
       </section>
 
-      {/* ブログ */}
       <section id="blog" className={styles.blogSection}>
         <p className={styles.sectionLabel}>Blog</p>
         <h2>ブログ</h2>
@@ -109,7 +95,6 @@ export default function Home() {
         <Link href="/blog">すべての記事を見る →</Link>
       </section>
 
-      {/* ソーシャル */}
       <section id="social" className={styles.contact}>
         <p className={styles.sectionLabel}>Social</p>
         <h2>ソーシャル</h2>
@@ -123,9 +108,7 @@ export default function Home() {
 
       <footer className={styles.footer}>
         <span>© 2026 mikancel.</span>
-        <button className={styles.themeToggle} onClick={toggle}>
-          {dark ? "Light" : "Dark"}
-        </button>
+        <HomeClient />
       </footer>
     </main>
   );
