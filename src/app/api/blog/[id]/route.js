@@ -47,6 +47,7 @@ export async function DELETE(req, { params }) {
     await deletePost(Number(id));
     revalidatePath("/blog");
     revalidatePath(`/blog/${id}`);
+    revalidatePath("/blog/new"); 
     revalidatePath("/");
     return Response.json({ ok: true });
   } catch (e) {
