@@ -78,13 +78,73 @@ export default function PostEditor({ postId: initialPostId }) {
     return data.id;
   }, [postId, title, content, tags, thumbnail, router]);
 
+  async function compressImage(file) {
+    if (file.type === "image/gif") return { blob: file, contentType: "image/gif", filename: file.name };
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const maxSize = 1920;
+        let { width, height } = img;
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          } else {
+            width = Math.round((width * maxSize) / height);
+            height = maxSize;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const limit = 4.5 * 1024 * 1024;
+        const qualities = [1.0, 0.85, 0.7, 0.5];
+        const filename = file.name.replace(/\.[^.]+$/, ".webp");
+
+        const tryCompress = (i) => {
+          canvas.toBlob((blob) => {
+            if (blob.size <= limit || i === qualities.length - 1) {
+              resolve({ blob, contentType: "image/webp", filename });
+            } else {
+              tryCompress(i + 1);
+            }
+          }, "image/webp", qualities[i]);
+        };
+
+        tryCompress(0);
+      };
+      img.src = url;
+    });
+  }
+
   const uploadFiles = useCallback(async (files, isThumbnail = false) => {
     const id = await ensurePostId();
     if (!id) return;
     setUploading(true);
     for (const file of files) {
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) continue;
-      if (file.size > 4.5 * 1024 * 1024) {
+
+      let uploadBlob = file;
+      let uploadContentType = file.type;
+      let uploadFilename = file.name;
+
+      if (file.type.startsWith("image/")) {
+        const compressed = await compressImage(file);
+        if (compressed.blob.size > 4.5 * 1024 * 1024) {
+          setMessage({ type: "error", text: `${file.name} は圧縮後も4.5MBを超えています` });
+          continue;
+        }
+        uploadBlob = compressed.blob;
+        uploadContentType = compressed.contentType;
+        uploadFilename = compressed.filename;
+      } else if (file.size > 4.5 * 1024 * 1024) {
         setMessage({ type: "error", text: `${file.name} は4.5MB以上のため、アップロードできません` });
         continue;
       }
@@ -93,8 +153,8 @@ export default function PostEditor({ postId: initialPostId }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
+          filename: uploadFilename,
+          contentType: uploadContentType,
           postId: id,
           isThumbnail,
         }),
@@ -107,8 +167,8 @@ export default function PostEditor({ postId: initialPostId }) {
 
       const putRes = await fetch(data.url, {
         method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
+        headers: { "Content-Type": uploadContentType },
+        body: uploadBlob,
       });
       if (!putRes.ok) {
         setMessage({ type: "error", text: "アップロードに失敗しました" });
@@ -155,18 +215,6 @@ export default function PostEditor({ postId: initialPostId }) {
     }, 0);
   }
 
-  const toolbar = [
-    { label: "B", action: () => wrapText("**", "**"), title: "太字" },
-    { label: "I", action: () => wrapText("*", "*"), title: "斜体" },
-    { label: "~~", action: () => wrapText("~~", "~~"), title: "打ち消し" },
-    { label: "`", action: () => wrapText("`", "`"), title: "インラインコード" },
-    { label: "```", action: () => insertAtCursor("\n```\n\n```\n"), title: "コードブロック" },
-    { label: "H2", action: () => insertAtCursor("\n## "), title: "見出し2" },
-    { label: "H3", action: () => insertAtCursor("\n### "), title: "見出し3" },
-    { label: ">", action: () => insertAtCursor("\n> "), title: "引用" },
-    { label: "---", action: () => insertAtCursor("\n---\n"), title: "水平線" },
-  ];
-
   function wrapText(before, after) {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -181,6 +229,34 @@ export default function PostEditor({ postId: initialPostId }) {
       ta.focus();
     }, 0);
   }
+
+  const handleKeyDown = (e) => {
+    const isMac = navigator.platform.toUpperCase().includes("MAC");
+    const mod = isMac ? e.metaKey : e.ctrlKey;
+    if (!mod) return;
+    const shortcuts = {
+      b: ["**", "**"],
+      i: ["*", "*"],
+      k: ["`", "`"],
+    };
+    const pair = shortcuts[e.key.toLowerCase()];
+    if (pair) {
+      e.preventDefault();
+      wrapText(pair[0], pair[1]);
+    }
+  };
+
+  const toolbar = [
+    { label: "B", action: () => wrapText("**", "**"), title: "太字 (Ctrl+B)" },
+    { label: "I", action: () => wrapText("*", "*"), title: "斜体 (Ctrl+I)" },
+    { label: "~~", action: () => wrapText("~~", "~~"), title: "打ち消し" },
+    { label: "`", action: () => wrapText("`", "`"), title: "インラインコード (Ctrl+K)" },
+    { label: "```", action: () => insertAtCursor("\n```\n\n```\n"), title: "コードブロック" },
+    { label: "H2", action: () => insertAtCursor("\n## "), title: "見出し2" },
+    { label: "H3", action: () => insertAtCursor("\n### "), title: "見出し3" },
+    { label: ">", action: () => insertAtCursor("\n> "), title: "引用" },
+    { label: "---", action: () => insertAtCursor("\n---\n"), title: "水平線" },
+  ];
 
   const handleSave = async (pub = published) => {
     if (!title.trim()) {
@@ -322,6 +398,7 @@ export default function PostEditor({ postId: initialPostId }) {
           onChange={e => setContent(e.target.value)}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
+          onKeyDown={handleKeyDown}
         />
       ) : (
         <div className={styles.previewPane}>
