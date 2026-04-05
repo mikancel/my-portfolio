@@ -121,7 +121,7 @@ export default function PostEditor({ postId: initialPostId }) {
       } else {
         const tag = file.type.startsWith("video/")
           ? `\n<video src="${data.publicUrl}" controls></video>\n`
-          : `\n![${file.name}](${data.publicUrl})\n`;
+          : `\n![](${data.publicUrl})\n`;
         insertAtCursor(tag);
       }
     }
