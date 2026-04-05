@@ -264,3 +264,16 @@
     text-align: center;
   }
 }
+
+.sentinel {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingMore {
+  font-size: 13px;
+  color: var(--sub);
+  padding: 16px 0;
+}

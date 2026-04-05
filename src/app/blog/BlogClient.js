@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./blog.module.css";
@@ -43,9 +43,16 @@ function formatDate(dateStr) {
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function BlogClient({ posts, tags }) {
+const LIMIT = 20;
+
+export default function BlogClient({ posts: initialPosts, tags }) {
+  const [posts, setPosts] = useState(initialPosts);
   const [activeTags, setActiveTags] = useState([]);
   const [dark, setDark] = useState(false);
+  const [offset, setOffset] = useState(initialPosts.length);
+  const [hasMore, setHasMore] = useState(initialPosts.length === LIMIT);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef(null);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -81,6 +88,31 @@ export default function BlogClient({ posts, tags }) {
     next.forEach((t) => params.append("tag", t));
     router.replace(`/blog${next.length > 0 ? `?${params}` : ""}`, { scroll: false });
   };
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || activeTags.length > 0) return;
+    setLoadingMore(true);
+    const res = await fetch(`/api/blog?limit=${LIMIT}&offset=${offset}`);
+    const data = await res.json();
+    const newPosts = data.posts || [];
+    setPosts((prev) => [...prev, ...newPosts]);
+    setOffset((prev) => prev + newPosts.length);
+    setHasMore(newPosts.length === LIMIT);
+    setLoadingMore(false);
+  }, [loadingMore, hasMore, offset, activeTags]);
+
+  useEffect(() => {
+    if (activeTags.length > 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { rootMargin: "200px" }
+    );
+    const el = sentinelRef.current;
+    if (el) observer.observe(el);
+    return () => { if (el) observer.unobserve(el); };
+  }, [loadMore, activeTags]);
 
   const filteredPosts = activeTags.length === 0
     ? posts
@@ -138,6 +170,12 @@ export default function BlogClient({ posts, tags }) {
             ))
           )}
         </div>
+
+        {activeTags.length === 0 && (
+          <div ref={sentinelRef} className={styles.sentinel}>
+            {loadingMore && <div className={styles.loadingMore}>読み込み中...</div>}
+          </div>
+        )}
       </main>
 
       <footer className={styles.footer}>

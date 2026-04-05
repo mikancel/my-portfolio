@@ -6,9 +6,11 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const tag = searchParams.get("tag");
   const all = searchParams.get("all") === "1";
+  const limit = Number(searchParams.get("limit") || 20);
+  const offset = Number(searchParams.get("offset") || 0);
 
   try {
-    let posts = await getAllPosts(!all);
+    let posts = await getAllPosts(!all, { limit: tag ? 9999 : limit, offset: tag ? 0 : offset });
     if (tag) {
       posts = posts.filter((p) => p.tags.some((t) => t.slug === tag));
     }

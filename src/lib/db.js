@@ -33,14 +33,16 @@ const POST_SELECT = `
   LEFT JOIN tags t ON t.id = pt.tag_id
 `;
 
-export async function getAllPosts(publishedOnly = true) {
+export async function getAllPosts(publishedOnly = true, { limit = 20, offset = 0 } = {}) {
   const db = getDb();
-  const result = await db.execute(
-    `${POST_SELECT}
+  const result = await db.execute({
+    sql: `${POST_SELECT}
      ${publishedOnly ? "WHERE p.published = 1" : ""}
      GROUP BY p.id
-     ORDER BY COALESCE(p.published_at, p.created_at) DESC`
-  );
+     ORDER BY COALESCE(p.published_at, p.created_at) DESC
+     LIMIT ? OFFSET ?`,
+    args: [limit, offset],
+  });
   return result.rows.map(parsePostRow);
 }
 
