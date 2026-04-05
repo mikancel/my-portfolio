@@ -31,6 +31,7 @@ export async function PATCH(req, { params }) {
     const post = await updatePost(Number(id), { ...rest, tagIds });
     revalidatePath("/blog");
     revalidatePath(`/blog/${id}`);
+    revalidatePath("/");
     return Response.json(post);
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
@@ -46,6 +47,7 @@ export async function DELETE(req, { params }) {
     await deletePost(Number(id));
     revalidatePath("/blog");
     revalidatePath(`/blog/${id}`);
+    revalidatePath("/");
     return Response.json({ ok: true });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });

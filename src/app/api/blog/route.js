@@ -37,6 +37,7 @@ export async function POST(req) {
     }));
     const post = await createPost({ title, content, thumbnail, published, tagIds });
     revalidatePath("/blog");
+    revalidatePath("/");
     return Response.json(post, { status: 201 });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
