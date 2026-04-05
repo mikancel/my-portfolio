@@ -1,5 +1,6 @@
 import { getPostById, updatePost, deletePost, upsertTag } from "@/lib/db";
 import { requireAuth } from "@/lib/session";
+import { revalidatePath } from "next/cache";
 
 export async function GET(req, { params }) {
   const { id } = await params;
@@ -28,6 +29,8 @@ export async function PATCH(req, { params }) {
         }))
       : undefined;
     const post = await updatePost(Number(id), { ...rest, tagIds });
+    revalidatePath("/blog");
+    revalidatePath(`/blog/${id}`);
     return Response.json(post);
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
@@ -41,6 +44,8 @@ export async function DELETE(req, { params }) {
   const { id } = await params;
   try {
     await deletePost(Number(id));
+    revalidatePath("/blog");
+    revalidatePath(`/blog/${id}`);
     return Response.json({ ok: true });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });

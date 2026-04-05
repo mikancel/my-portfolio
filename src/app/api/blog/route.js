@@ -1,5 +1,6 @@
 import { getAllPosts, createPost, upsertTag, getAllTags } from "@/lib/db";
 import { requireAuth } from "@/lib/session";
+import { revalidatePath } from "next/cache";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
@@ -35,6 +36,7 @@ export async function POST(req) {
       return tag.id;
     }));
     const post = await createPost({ title, content, thumbnail, published, tagIds });
+    revalidatePath("/blog");
     return Response.json(post, { status: 201 });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
