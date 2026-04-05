@@ -38,7 +38,7 @@ export async function markdownToHtml(markdown) {
   );
 
   const result = await unified()
-    .use(remarkParse)
+    .use(remarkParse, { breaks: true })
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeHighlight)
