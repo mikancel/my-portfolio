@@ -1,10 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import styles from "./post.module.css";
 import "highlight.js/styles/github-dark.css";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
+
+const HEADER_HEIGHT = 56;
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
@@ -44,20 +46,29 @@ function Thumbnail({ src, title }) {
   return <img src={src} alt={title} className={styles.heroImg} />;
 }
 
-function TableOfContents({ toc, open, onClose, title }) {
+function TableOfContents({ toc, open, onClose, onTocClick, title }) {
   return (
     <div className={`${styles.tocDrawer} ${open ? styles.tocOpen : ""}`}>
       <div className={styles.tocInner}>
         <p className={styles.tocTitle}>目次</p>
         <ul className={styles.tocList}>
           <li>
-            <a href="#" onClick={onClose} className={styles.tocLink} style={{ fontWeight: "bold" }}>
+            <a
+              href="#"
+              onClick={(e) => { onTocClick(e, null); onClose(); }}
+              className={styles.tocLink}
+              style={{ fontWeight: "bold" }}
+            >
               {title}
             </a>
           </li>
           {toc.map((item) => (
             <li key={item.id} style={{ paddingLeft: `${item.level * 16}px` }}>
-              <a href={`#${item.id}`} onClick={onClose} className={styles.tocLink}>
+              <a
+                href={`#${item.id}`}
+                onClick={(e) => { onTocClick(e, item.id); onClose(); }}
+                className={styles.tocLink}
+              >
                 {item.text}
               </a>
             </li>
@@ -68,12 +79,118 @@ function TableOfContents({ toc, open, onClose, title }) {
   );
 }
 
+function useScrollHeader() {
+  const translateY = useRef(0);
+  const lastScrollY = useRef(0);
+  const snapTimer = useRef(null);
+  const headerRef = useRef(null);
+  const forceVisible = useRef(false);
+  const tocOpenRef = useRef(false);
+
+  const applyTranslate = useCallback((val) => {
+    translateY.current = val;
+    if (headerRef.current) {
+      headerRef.current.style.transform = `translateY(${val}px)`;
+    }
+  }, []);
+
+  const snapToEdge = useCallback(() => {
+    const snapped = translateY.current < -(HEADER_HEIGHT / 2) ? -HEADER_HEIGHT : 0;
+    if (headerRef.current) {
+      headerRef.current.style.transition = "transform 0.2s ease";
+      applyTranslate(snapped);
+      setTimeout(() => {
+        if (headerRef.current) headerRef.current.style.transition = "";
+      }, 200);
+    }
+  }, [applyTranslate]);
+
+  // tocOpen の変化を ref に同期（リスナー再登録不要）
+  const setTocOpenRef = useCallback((val) => {
+    tocOpenRef.current = val;
+    if (val) {
+      // TOC を開いたらヘッダーを表示固定
+      clearTimeout(snapTimer.current);
+      applyTranslate(0);
+    }
+  }, [applyTranslate]);
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    const onScroll = () => {
+      if (tocOpenRef.current) return;
+
+      if (forceVisible.current) {
+        forceVisible.current = false;
+        lastScrollY.current = window.scrollY;
+        return;
+      }
+
+      const y = window.scrollY;
+      const delta = y - lastScrollY.current;
+      lastScrollY.current = y;
+
+      if (y < HEADER_HEIGHT) {
+        applyTranslate(0);
+        return;
+      }
+
+      const next = Math.min(0, Math.max(-HEADER_HEIGHT, translateY.current - delta));
+      applyTranslate(next);
+
+      clearTimeout(snapTimer.current);
+      snapTimer.current = setTimeout(snapToEdge, 150);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(snapTimer.current);
+    };
+  }, [applyTranslate, snapToEdge]);
+
+  const handleTocClick = useCallback((e, headingId) => {
+    if (headingId === null) {
+      applyTranslate(0);
+      return;
+    }
+
+    const target = document.getElementById(headingId);
+    if (!target) return;
+
+    const targetY = target.getBoundingClientRect().top + window.scrollY - HEADER_HEIGHT;
+    const currentY = window.scrollY;
+
+    if (targetY > currentY) {
+      // 下方向ジャンプ → ヘッダー表示固定（次のスクロールで解除）
+      forceVisible.current = true;
+      applyTranslate(0);
+    }
+    // 上方向は scroll-margin-top で対応
+  }, [applyTranslate]);
+
+  return { headerRef, setTocOpenRef, handleTocClick };
+}
+
 export default function PostClient({ post, html, toc }) {
   const [tocOpen, setTocOpen] = useState(false);
-  const [headerVisible, setHeaderVisible] = useState(true);
-  const [lastY, setLastY] = useState(0);
   const [lightbox, setLightbox] = useState({ open: false, slides: [], index: 0 });
   const [dark, setDark] = useState(false);
+
+  const { headerRef, setTocOpenRef, handleTocClick } = useScrollHeader();
+
+  const handleTocToggle = useCallback(() => {
+    setTocOpen((v) => {
+      setTocOpenRef(!v);
+      return !v;
+    });
+  }, [setTocOpenRef]);
+
+  const handleTocClose = useCallback(() => {
+    setTocOpen(false);
+    setTocOpenRef(false);
+  }, [setTocOpenRef]);
 
   useEffect(() => {
     document.title = post.title;
@@ -94,16 +211,6 @@ export default function PostClient({ post, html, toc }) {
     document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
     setDark(next);
   };
-
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      setHeaderVisible(tocOpen || y < lastY || y < 60);
-      setLastY(y);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [lastY, tocOpen]);
 
   useEffect(() => {
     if (!html) return;
@@ -186,16 +293,22 @@ export default function PostClient({ post, html, toc }) {
   return (
     <div className={styles.page}>
       <PostHeader
-        visible={headerVisible}
+        headerRef={headerRef}
         hasToc={toc.length > 0}
         tocOpen={tocOpen}
-        onTocToggle={() => setTocOpen((v) => !v)}
+        onTocToggle={handleTocToggle}
       />
 
       {tocOpen && (
-        <div className={styles.tocOverlay} onClick={() => setTocOpen(false)} />
+        <div className={styles.tocOverlay} onClick={handleTocClose} />
       )}
-      <TableOfContents toc={toc} open={tocOpen} onClose={() => setTocOpen(false)} title={post.title} />
+      <TableOfContents
+        toc={toc}
+        open={tocOpen}
+        onClose={handleTocClose}
+        onTocClick={handleTocClick}
+        title={post.title}
+      />
 
       <article className={styles.article}>
         <Thumbnail src={post.thumbnail} title={post.title} />
@@ -245,9 +358,9 @@ export default function PostClient({ post, html, toc }) {
   );
 }
 
-function PostHeader({ visible, hasToc, tocOpen, onTocToggle }) {
+function PostHeader({ headerRef, hasToc, tocOpen, onTocToggle }) {
   return (
-    <header className={`${styles.header} ${visible ? styles.headerVisible : styles.headerHidden}`}>
+    <header ref={headerRef} className={styles.header}>
       <Link href="/blog" className={styles.headerLogo}>
         <span className={styles.accent}>mikancel</span>.com/blog
       </Link>
