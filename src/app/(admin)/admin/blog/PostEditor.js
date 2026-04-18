@@ -3,6 +3,93 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./editor.module.css";
 
+// ---- TagSelector ----
+
+function TagSelector({ selected, onChange }) {
+  const [allTags, setAllTags] = useState([]);
+  const [input, setInput] = useState("");
+
+  useEffect(() => {
+    fetch("/api/blog?all=1&limit=1")
+      .then(r => r.json())
+      .then(d => setAllTags(d.tags || []));
+  }, []);
+
+  const toggle = (name) => {
+    if (selected.includes(name)) {
+      onChange(selected.filter(t => t !== name));
+    } else {
+      onChange([...selected, name]);
+    }
+  };
+
+  const addNew = () => {
+    const name = input.trim();
+    if (!name || selected.includes(name)) { setInput(""); return; }
+    onChange([...selected, name]);
+    setInput("");
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") { e.preventDefault(); addNew(); }
+  };
+
+  return (
+    <div className={styles.tagSelector}>
+      {/* 選択済みバッジ */}
+      {selected.length > 0 && (
+        <div className={styles.tagBadges}>
+          {selected.map(name => (
+            <span key={name} className={styles.tagBadge}>
+              {name}
+              <button
+                type="button"
+                className={styles.tagBadgeRemove}
+                onClick={() => onChange(selected.filter(t => t !== name))}
+              >×</button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* 既存タグ一覧 */}
+      {allTags.length > 0 && (
+        <div className={styles.tagExisting}>
+          {allTags.map(t => (
+            <button
+              key={t.id}
+              type="button"
+              className={`${styles.tagExistingBtn} ${selected.includes(t.name) ? styles.tagExistingBtnActive : ""}`}
+              onClick={() => toggle(t.name)}
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* 新規タグ入力 */}
+      <div className={styles.tagNewRow}>
+        <input
+          className={styles.tagNewInput}
+          placeholder="新しいタグ名"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <button
+          type="button"
+          className={styles.tagNewBtn}
+          onClick={addNew}
+          disabled={!input.trim()}
+        >追加</button>
+      </div>
+    </div>
+  );
+}
+
+// ---- PostEditor ----
+
 export default function PostEditor({ postId: initialPostId }) {
   const router = useRouter();
   const [postId, setPostId] = useState(initialPostId || null);
@@ -10,7 +97,7 @@ export default function PostEditor({ postId: initialPostId }) {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState([]);
   const [thumbnail, setThumbnail] = useState("");
   const [published, setPublished] = useState(false);
   const [preview, setPreview] = useState("");
@@ -30,7 +117,7 @@ export default function PostEditor({ postId: initialPostId }) {
       if (data.error) return;
       setTitle(data.title || "");
       setContent(data.content || "");
-      setTags(data.tags?.map(t => t.name).join(", ") || "");
+      setTags(data.tags?.map(t => t.name) || []);
       setThumbnail(data.thumbnail || "");
       setPublished(data.published || false);
     });
@@ -62,11 +149,10 @@ export default function PostEditor({ postId: initialPostId }) {
       setMessage({ type: "error", text: "タイトルを入力してください" });
       return null;
     }
-    const tagNames = tags.split(",").map(t => t.trim()).filter(Boolean);
     const res = await fetch("/api/blog", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content, thumbnail: thumbnail || null, published: false, tagNames }),
+      body: JSON.stringify({ title, content, thumbnail: thumbnail || null, published: false, tagNames: tags }),
     });
     const data = await res.json();
     if (data.error) {
@@ -266,8 +352,7 @@ export default function PostEditor({ postId: initialPostId }) {
     setSaving(true);
     setMessage({ type: "", text: "" });
 
-    const tagNames = tags.split(",").map(t => t.trim()).filter(Boolean);
-    const body = { title, content, thumbnail: thumbnail || null, published: pub, tagNames };
+    const body = { title, content, thumbnail: thumbnail || null, published: pub, tagNames: tags };
     const currentId = postId;
     const url = currentId ? `/api/blog/${currentId}` : "/api/blog";
     const method = currentId ? "PATCH" : "POST";
@@ -302,12 +387,7 @@ export default function PostEditor({ postId: initialPostId }) {
       />
 
       <div className={styles.metaRow}>
-        <input
-          className={styles.metaInput}
-          placeholder="タグ（カンマ区切り）例: Next.js, React"
-          value={tags}
-          onChange={e => setTags(e.target.value)}
-        />
+        <TagSelector selected={tags} onChange={setTags} />
         <div className={styles.thumbnailRow}>
           {thumbnail && (
             <img src={thumbnail} alt="thumbnail" className={styles.thumbnailPreview} />

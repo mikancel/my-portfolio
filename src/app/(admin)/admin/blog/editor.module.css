@@ -271,3 +271,121 @@
   text-decoration: none;
   pointer-events: none;
 }
+
+/* ---- TagSelector ---- */
+
+.tagSelector {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tagBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tagBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 10px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.tagBadgeRemove {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  margin-left: 2px;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+}
+
+.tagBadgeRemove:hover { color: #fff; }
+
+.tagExisting {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tagExistingBtn {
+  padding: 3px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--sub);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.tagExistingBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tagExistingBtnActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.tagExistingBtnActive:hover {
+  opacity: 0.8;
+  color: #fff;
+}
+
+.tagNewRow {
+  display: flex;
+  gap: 6px;
+}
+
+.tagNewInput {
+  flex: 1;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.tagNewInput:focus { border-color: var(--accent); }
+.tagNewInput::placeholder { color: var(--sub); opacity: 0.5; }
+
+.tagNewBtn {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.tagNewBtn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tagNewBtn:disabled { opacity: 0.4; cursor: not-allowed; }
