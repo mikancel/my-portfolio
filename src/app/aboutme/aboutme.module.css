@@ -58,6 +58,7 @@
   position: absolute;
   top: 8%;
   left: 50%;
+  transform: translateX(-50%);
   z-index: 10;
   width: 780px;
   max-width: calc(100% - 48px);
@@ -150,7 +151,6 @@
 ════════════════════════════ */
 .heroBottom {
   position: absolute;
-  bottom: 15%;
   left: 0;
   right: 0;
   padding: 0 48px;

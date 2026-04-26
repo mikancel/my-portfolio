@@ -149,11 +149,17 @@ export default function AboutMe() {
   const [showName, setShowName] = useState(false);
   const [showRole, setShowRole] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
+  const [heroBottom, setHeroBottom] = useState(null);
 
   const [refProfile,   visProfile]   = useFadeIn();
   const [refStack,     visStack]     = useFadeIn();
   const [refInterests, visInterests] = useFadeIn();
   const [refTimeline,  visTimeline]  = useFadeIn();
+
+  // ページ開いた時点の高さでheroBottomの位置を固定
+  useEffect(() => {
+    setHeroBottom(Math.round(window.innerHeight * 0.15));
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -190,7 +196,7 @@ export default function AboutMe() {
       <section className={styles.hero}>
         <CmdWindow onWhoami={handleWhoami} />
 
-        <div className={styles.heroBottom}>
+        <div className={styles.heroBottom} style={heroBottom !== null ? { bottom: `${heroBottom}px` } : { bottom: "15%" }}>
           <div className={`${styles.heroName} ${showName ? styles.heroNameIn : ""}`}>
             mikancel
           </div>
