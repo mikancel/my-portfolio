@@ -37,12 +37,18 @@ function CmdWindow({ onWhoami }) {
   const [lines, setLines] = useState([]);
   const [step, setStep] = useState(0);
   const [typing, setTyping] = useState("");
-  const [phase, setPhase] = useState("typing");
+  const [phase, setPhase] = useState("booting"); // booting | typing
   const [closed, setClosed] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef(null);
   const bodyRef = useRef(null);
+
+  // 起動アニメーション後にtypingフェーズへ
+  useEffect(() => {
+    const t = setTimeout(() => setPhase("typing"), 600);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (phase !== "typing") return;
@@ -63,9 +69,9 @@ function CmdWindow({ onWhoami }) {
             if (current.text === "echo $ROLE") onWhoami("role");
             if (current.text === "echo $LOCATION") onWhoami("location");
             setStep(s => s + 1);
-          }, current.text === "" ? 0 : 300);
+          }, 700);
         }
-      }, current.text === "" ? 0 : 55);
+      }, 90);
       return () => clearInterval(iv);
     } else if (current.type === "blank") {
       setTimeout(() => {
@@ -75,8 +81,8 @@ function CmdWindow({ onWhoami }) {
     } else {
       setTimeout(() => {
         setLines(prev => [...prev, { type: "out", text: current.text }]);
-        setStep(s => s + 1);
-      }, 120);
+        setTimeout(() => setStep(s => s + 1), 600);
+      }, 180);
     }
   }, [step, phase]);
 
@@ -108,7 +114,10 @@ function CmdWindow({ onWhoami }) {
   return (
     <div
       className={styles.cmdWin}
-      style={{ transform: `translate(calc(-50% + ${pos.x}px), ${pos.y}px)` }}
+      style={pos.x !== 0 || pos.y !== 0
+        ? { transform: `translateX(calc(-50% + ${pos.x}px)) translateY(${pos.y}px)`, animation: "none" }
+        : {}
+      }
     >
       <div className={styles.cmdBar} onMouseDown={onMouseDown} style={{ cursor: "move" }}>
         <span className={styles.cmdBarTitle}>mikancel.exe</span>
