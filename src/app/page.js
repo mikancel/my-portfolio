@@ -52,10 +52,16 @@ export default async function Home() {
       <section className={styles.hero}>
         <h1>Welcome to <span className={styles.accent}>mikancel</span>.com</h1>
       </section>
-
+      <section className={styles.contact}>
+        <p className={styles.sectionLabel}>About</p>
+        <h2>About me</h2>
+        <a href="/aboutme" className={styles.contactLink}>
+          <span>About me</span>
+        </a>
+      </section>
       <section id="languages" className={styles.langs}>
         <p className={styles.sectionLabel}>Languages</p>
-        <h2>使用言語</h2>
+        <h2>言語</h2>
         {Object.entries(langs)
           .sort((a, b) => b[1] - a[1])
           .map(([lang, bytes]) => {

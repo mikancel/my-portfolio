@@ -1,5 +1,4 @@
 import "./globals.css";
-import Script from "next/script";
 
 export const metadata = {
   title: "mikancel.com",
@@ -7,41 +6,21 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-
   return (
     <html lang="ja" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=LINE+Seed+JP:wght@400;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Fira+Code:wght@400;500&family=Playfair+Display:ital,wght@1,400;1,700&family=LINE+Seed+JP:wght@400;700;800&display=swap" rel="stylesheet" />
       </head>
       <body>
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-            document.documentElement.style.background = dark ? '#1a1a1a' : '#ffffff';
           })();
         `}} />
         {children}
-
-        {gaId && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${gaId}');
-              `}
-            </Script>
-          </>
-        )}
       </body>
     </html>
   );

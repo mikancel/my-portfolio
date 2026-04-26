@@ -1,0 +1,396 @@
+/* ── Base ── */
+.page {
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ── Nav ── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 14px 32px;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg);
+}
+
+.navLogo {
+  font-weight: bold;
+  font-size: 18px;
+  letter-spacing: -0.5px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.accent { color: var(--accent); }
+
+/* ── フェードイン ── */
+.fade {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.fadeIn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ════════════════════════════
+   Hero
+════════════════════════════ */
+.hero {
+  background: #0a0a0a;
+  height: 100vh;
+  position: relative;
+  border-bottom: 3px solid #f68827;
+  overflow: hidden;
+}
+
+/* ════════════════════════════
+   コマンドプロンプト ウィンドウ
+════════════════════════════ */
+.cmdWin {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  z-index: 10;
+  width: 780px;
+  max-width: calc(100% - 48px);
+  background: #0c0c0c;
+  border: 1px solid #3a3a3a;
+  box-shadow: 4px 4px 0 #000, 0 20px 60px rgba(0,0,0,0.85);
+  user-select: none;
+  will-change: transform;
+}
+
+/* タイトルバー */
+.cmdBar {
+  background: #1a1a1a;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 0 0 14px;
+  border-bottom: 1px solid #2e2e2e;
+}
+
+.cmdBarTitle {
+  font-family: 'Ubuntu Mono', monospace !important;
+  font-size: 13px;
+  color: #cccccc;
+  flex: 1;
+  pointer-events: none;
+}
+
+.cmdBtns { display: flex; height: 100%; }
+
+.cmdBtn {
+  width: 46px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  color: #cccccc;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cmdBtn:hover { background: rgba(255,255,255,0.08); }
+.cmdClose:hover { background: #c42b1c; color: #fff; }
+
+/* 本体 */
+.cmdBody {
+  background: #0c0c0c;
+  padding: 16px 20px 20px;
+  min-height: 260px;
+  max-height: 420px;
+  overflow-y: auto;
+  font-family: 'Ubuntu Mono', monospace !important;
+  font-size: 17px;
+  line-height: 1.75;
+  color: #cccccc;
+  scrollbar-width: thin;
+  scrollbar-color: #333 #0c0c0c;
+}
+
+.cmdBody::-webkit-scrollbar { width: 6px; }
+.cmdBody::-webkit-scrollbar-track { background: #0c0c0c; }
+.cmdBody::-webkit-scrollbar-thumb { background: #333; }
+
+.cmdLine {
+  font-family: 'Ubuntu Mono', monospace !important;
+  font-size: 17px;
+  line-height: 1.75;
+  color: #cccccc;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.cmdDir { color: #f68827; }
+
+.cmdCursor {
+  color: #cccccc;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ════════════════════════════
+   Hero: 名前・メタ
+════════════════════════════ */
+.heroBottom {
+  position: absolute;
+  bottom: 15%;
+  left: 0;
+  right: 0;
+  padding: 0 48px;
+}
+
+.heroName {
+  font-family: 'LINE Seed JP', sans-serif !important;
+  font-size: clamp(96px, 18vw, 260px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  width: 100%;
+  text-align: justify;
+  text-align-last: justify;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+}
+
+.heroNameIn {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.heroMeta {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.heroMetaItem {
+  font-size: 22px;
+  color: #f68827;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.heroMetaIn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.heroScroll {
+  position: absolute;
+  bottom: 24px;
+  right: 48px;
+  font-size: 13px;
+  color: #444;
+  letter-spacing: 0.15em;
+}
+
+/* ════════════════════════════
+   セクション
+════════════════════════════ */
+.sectionOrange {
+  background: #f68827;
+  padding: 120px 64px;
+  border-bottom: 3px solid #0a0a0a;
+}
+
+.sectionBlack {
+  background: #0a0a0a;
+  padding: 120px 64px;
+  border-bottom: 3px solid #1a1a1a;
+}
+
+.sectionLime {
+  background: #d4f53c;
+  padding: 120px 64px;
+  border-bottom: 3px solid #0a0a0a;
+}
+
+.labelLight {
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.2em;
+  margin-bottom: 72px;
+}
+
+.labelDark {
+  font-size: 13px;
+  color: rgba(0,0,0,0.4);
+  letter-spacing: 0.2em;
+  margin-bottom: 72px;
+}
+
+/* ── Profile ── */
+.profileRow {
+  display: flex;
+  align-items: baseline;
+  gap: 40px;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.18);
+}
+
+.profileRow:last-child { border-bottom: none; }
+
+.profileKey {
+  font-size: 13px;
+  color: rgba(0,0,0,0.5);
+  letter-spacing: 0.12em;
+  min-width: 96px;
+  flex-shrink: 0;
+}
+
+.profileVal {
+  font-size: clamp(40px, 6vw, 88px);
+  color: #0a0a0a;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ── Stack ── */
+.stackItem {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  padding: 24px 0;
+  border-bottom: 1px solid #1e1e1e;
+}
+
+.stackItem:last-child { border-bottom: none; }
+
+.stackCategory {
+  font-family: 'LINE Seed JP', sans-serif !important;
+  font-size: 13px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.15em;
+  min-width: 96px;
+  flex-shrink: 0;
+}
+
+.stackTechs {
+  font-family: 'LINE Seed JP', sans-serif !important;
+  font-size: clamp(40px, 6vw, 88px);
+  font-weight: 800;
+  line-height: 1;
+  color: #ffffff;
+}
+
+/* ── Interests ── */
+.interestItem {
+  display: flex;
+  align-items: baseline;
+  gap: 48px;
+  padding: 32px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+
+.interestItem:last-child { border-bottom: none; }
+
+.interestKey {
+  font-size: 13px;
+  color: rgba(0,0,0,0.4);
+  letter-spacing: 0.15em;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.interestVal {
+  font-family: 'LINE Seed JP', sans-serif !important;
+  font-size: clamp(40px, 6vw, 88px);
+  font-weight: 800;
+  color: #0a0a0a;
+  line-height: 1;
+}
+
+/* ── Timeline / git ── */
+.gitCmd {
+  font-family: 'Ubuntu Mono', monospace !important;
+  font-size: 15px;
+  color: rgba(255,255,255,0.25);
+  margin-bottom: 40px;
+}
+
+.gitLog { display: flex; flex-direction: column; }
+
+.gitItem {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  padding: 22px 0;
+  border-bottom: 1px solid #1a1a1a;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.gitItem:last-child { border-bottom: none; }
+
+.gitIn { opacity: 1; transform: translateX(0); }
+
+.gitTree { font-family: 'Ubuntu Mono', monospace !important; font-size: clamp(40px, 6vw, 88px); color: #4ecdc4; flex-shrink: 0; line-height: 1; }
+.gitHash { font-family: 'Ubuntu Mono', monospace !important; font-size: clamp(40px, 6vw, 88px); color: #f68827; flex-shrink: 0; line-height: 1; }
+.gitMsg  { font-family: 'Ubuntu Mono', monospace !important; font-size: clamp(40px, 6vw, 88px); color: #e0e0e0; line-height: 1; }
+
+/* ── Footer ── */
+.footer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  color: var(--sub);
+  padding: 32px;
+  border-top: 1px solid var(--border);
+  background-color: var(--bg);
+}
+
+.themeToggle {
+  position: absolute;
+  right: 32px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--sub);
+  width: 60px;
+  text-align: center;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .cmdWin { width: calc(100% - 32px); }
+  .heroBottom { padding: 0 24px 40px; }
+  .heroName { font-size: clamp(72px, 18vw, 140px); }
+  .heroMetaItem { font-size: 18px; }
+  .heroScroll { right: 24px; }
+  .sectionOrange,
+  .sectionBlack,
+  .sectionLime { padding: 80px 24px; }
+  .stackName   { font-size: clamp(40px, 10vw, 72px); }
+  .interestVal { font-size: clamp(32px, 8vw, 56px); }
+  .profileVal  { font-size: clamp(28px, 8vw, 56px); }
+  .nav { padding: 12px 16px; }
+  .themeToggle { right: 16px; }
+}
