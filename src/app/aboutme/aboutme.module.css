@@ -380,17 +380,56 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .cmdWin { width: calc(100% - 32px); }
-  .heroBottom { padding: 0 24px 40px; }
-  .heroName { font-size: clamp(72px, 18vw, 140px); }
-  .heroMetaItem { font-size: 18px; }
-  .heroScroll { right: 24px; }
-  .sectionOrange,
-  .sectionBlack,
-  .sectionLime { padding: 80px 24px; }
-  .stackName   { font-size: clamp(40px, 10vw, 72px); }
-  .interestVal { font-size: clamp(32px, 8vw, 56px); }
-  .profileVal  { font-size: clamp(28px, 8vw, 56px); }
+  /* Nav */
   .nav { padding: 12px 16px; }
   .themeToggle { right: 16px; }
+
+  /* Hero */
+  .hero { height: 100svh; }
+  .cmdWin {
+    top: 5%;
+    width: calc(100% - 32px);
+    max-width: calc(100% - 32px);
+  }
+  .cmdBody {
+    min-height: 160px;
+    max-height: 240px;
+    font-size: 14px !important;
+    line-height: 1.6;
+  }
+  .cmdLine { font-size: 14px !important; line-height: 1.6; }
+  .heroBottom { padding: 0 16px 24px; }
+  .heroName { font-size: clamp(56px, 14vw, 100px); }
+  .heroMetaItem { font-size: 15px; }
+  .heroScroll { right: 16px; bottom: 16px; }
+
+  /* Sections */
+  .sectionOrange,
+  .sectionBlack,
+  .sectionLime { padding: 64px 20px; }
+
+  .labelLight,
+  .labelDark { margin-bottom: 40px; }
+
+  /* Profile */
+  .profileRow { gap: 16px; padding: 16px 0; flex-direction: column; }
+  .profileKey { min-width: unset; }
+  .profileVal { font-size: clamp(28px, 7vw, 52px) !important; }
+
+  /* Stack */
+  .stackItem { gap: 12px; padding: 16px 0; flex-direction: column; }
+  .stackCategory { min-width: unset; }
+  .stackTechs { font-size: clamp(24px, 6vw, 44px) !important; }
+
+  /* Interests */
+  .interestItem { gap: 12px; padding: 20px 0; flex-direction: column; }
+  .interestKey { min-width: unset; }
+  .interestVal { font-size: clamp(32px, 8vw, 56px) !important; }
+
+  /* Timeline */
+  .gitCmd { font-size: 13px !important; }
+  .gitItem { gap: 10px; padding: 16px 0; flex-wrap: wrap; }
+  .gitTree { font-size: clamp(18px, 4vw, 28px) !important; }
+  .gitHash { font-size: clamp(18px, 4vw, 28px) !important; }
+  .gitMsg  { font-size: clamp(18px, 4vw, 28px) !important; width: 100%; }
 }

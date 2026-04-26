@@ -17,7 +17,6 @@ const SCRIPT = [
   { type: "out",    text: "SE / Developer" },
   { type: "prompt", text: "echo $LOCATION" },
   { type: "out",    text: "Aichi, Japan" },
-  { type: "prompt", text: "" },
 ];
 
 function useFadeIn(threshold = 0.1) {
@@ -63,7 +62,6 @@ function CmdWindow({ onWhoami }) {
             if (current.text === "whoami") onWhoami("name");
             if (current.text === "echo $ROLE") onWhoami("role");
             if (current.text === "echo $LOCATION") onWhoami("location");
-            if (current.text === "") { setPhase("waiting"); return; }
             setStep(s => s + 1);
           }, current.text === "" ? 0 : 300);
         }
