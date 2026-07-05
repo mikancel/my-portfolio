@@ -9,7 +9,7 @@ const TIMELINE = [
   { hash: "apr2020", message: "feat: started university" },
   { hash: "oct2022", message: "feat: studied abroad in Canada" },
   { hash: "mar2025", message: "feat: graduated from university" },
-  { hash: "apr2026", message: "chore: working as a systems engineer" },
+  { hash: "apr2025", message: "chore: working as a systems engineer" },
 ];
 
 const SCRIPT = [
