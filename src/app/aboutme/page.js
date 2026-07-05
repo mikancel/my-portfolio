@@ -257,7 +257,6 @@ export default function AboutMe() {
             ["storage",  "Cloudflare R2"],
             ["auth",     "WebAuthn / iron-session"],
             ["deploy",   "Vercel"],
-            ["favorite", "Java / Kotlin / Swift"],
           ].map(([category, techs]) => (
             <div key={category} className={styles.stackItem}>
               <span className={styles.stackCategory}>{category}</span>
