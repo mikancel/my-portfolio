@@ -43,10 +43,14 @@
 /* ════════════════════════════
    Hero
 ════════════════════════════ */
+/* nav(約53px)の下に100svh分。コマンドウィンドウと名前は
+   フレックスの通常フローで並べ、物理的に重ならないようにする */
 .hero {
   background: #0a0a0a;
-  height: 100vh;
+  min-height: calc(100svh - 53px);
   position: relative;
+  display: flex;
+  flex-direction: column;
   border-bottom: 3px solid #f68827;
   overflow: hidden;
 }
@@ -55,10 +59,8 @@
    コマンドプロンプト ウィンドウ
 ════════════════════════════ */
 .cmdWin {
-  position: absolute;
-  top: 8%;
-  left: 50%;
-  transform: translateX(-50%);
+  align-self: center;
+  margin: 5vh auto 32px;
   z-index: 10;
   width: 780px;
   max-width: calc(100% - 48px);
@@ -72,11 +74,11 @@
 
 @keyframes cmdBoot {
   from {
-    transform: translateX(-50%) scale(0.05);
+    transform: scale(0.05);
     opacity: 0;
   }
   to {
-    transform: translateX(-50%) scale(1);
+    transform: scale(1);
     opacity: 1;
   }
 }
@@ -89,6 +91,7 @@
   align-items: center;
   padding: 0 0 0 14px;
   border-bottom: 1px solid #2e2e2e;
+  touch-action: none; /* タッチドラッグ時のスクロールを抑止 */
 }
 
 .cmdBarTitle {
@@ -122,8 +125,10 @@
 .cmdBody {
   background: #0c0c0c;
   padding: 16px 20px 20px;
-  min-height: 260px;
-  max-height: 420px;
+  /* 低い画面でもヒーロー内に収まるよう画面高さに連動させる
+     (min-height が max-height に勝つため、こちらも vh 連動) */
+  min-height: min(260px, 30vh);
+  max-height: clamp(200px, 36vh, 420px);
   overflow-y: auto;
   font-family: 'Ubuntu Mono', monospace !important;
   font-size: 17px;
@@ -162,10 +167,8 @@
    Hero: 名前・メタ
 ════════════════════════════ */
 .heroBottom {
-  position: absolute;
-  left: 0;
-  right: 0;
-  padding: 0 48px;
+  margin-top: auto; /* ヒーロー下部に寄せる（フロー配置なので重ならない） */
+  padding: 0 48px clamp(48px, 8vh, 140px);
 }
 
 .heroName {
@@ -397,9 +400,9 @@
   .themeToggle { right: 16px; }
 
   /* Hero */
-  .hero { height: 100svh; }
+  .hero { min-height: calc(100svh - 49px); }
   .cmdWin {
-    top: 5%;
+    margin: 4vh auto 32px;
     width: calc(100% - 32px);
     max-width: calc(100% - 32px);
   }
@@ -410,7 +413,7 @@
     line-height: 1.6;
   }
   .cmdLine { font-size: 14px !important; line-height: 1.6; }
-  .heroBottom { padding: 0 16px 24px; }
+  .heroBottom { padding: 0 16px 72px; }
   .heroName { font-size: clamp(56px, 14vw, 100px); }
   .heroMetaItem { font-size: 15px; }
   .heroScroll { right: 16px; bottom: 16px; }

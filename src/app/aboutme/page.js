@@ -35,7 +35,7 @@ function useFadeIn(threshold = 0.1) {
   return [ref, visible];
 }
 
-function CmdWindow({ onWhoami }) {
+function CmdWindow({ onWhoami, onClosed }) {
   const [lines, setLines] = useState([]);
   const [step, setStep] = useState(0);
   const [typing, setTyping] = useState("");
@@ -55,35 +55,44 @@ function CmdWindow({ onWhoami }) {
   useEffect(() => {
     if (phase !== "typing") return;
     const current = SCRIPT[step];
-    if (!current) return;
+    if (!current) {
+      // スクリプト終了後は待機カーソルを表示
+      const t = setTimeout(() => setPhase("waiting"), 150);
+      return () => clearTimeout(t);
+    }
 
     if (current.type === "prompt") {
+      // 本物のターミナル風：まず空のプロンプト＋カーソルで待機してからタイプ開始
       let i = 0;
-      const iv = setInterval(() => {
-        i++;
-        setTyping(current.text.slice(0, i));
-        if (i >= current.text.length) {
-          clearInterval(iv);
-          setTimeout(() => {
-            setLines(prev => [...prev, { type: "prompt", text: current.text }]);
-            setTyping("");
-            if (current.text === "whoami") onWhoami("name");
-            if (current.text === "echo $ROLE") onWhoami("role");
-            if (current.text === "echo $LOCATION") onWhoami("location");
-            setStep(s => s + 1);
-          }, 700);
-        }
-      }, 90);
-      return () => clearInterval(iv);
+      let iv = null;
+      const idle = setTimeout(() => {
+        iv = setInterval(() => {
+          i++;
+          setTyping(current.text.slice(0, i));
+          if (i >= current.text.length) {
+            clearInterval(iv);
+            setTimeout(() => {
+              setLines(prev => [...prev, { type: "prompt", text: current.text }]);
+              setTyping("");
+              if (current.text === "whoami") onWhoami("name");
+              if (current.text === "echo $ROLE") onWhoami("role");
+              if (current.text === "echo $LOCATION") onWhoami("location");
+              setStep(s => s + 1);
+            }, 400);
+          }
+        }, 90);
+      }, 600);
+      return () => { clearTimeout(idle); if (iv) clearInterval(iv); };
     } else if (current.type === "blank") {
       setTimeout(() => {
         setLines(prev => [...prev, { type: "blank" }]);
         setStep(s => s + 1);
       }, 80);
     } else {
+      // 結果を表示したらすぐ次のステップ（＝次の行にプロンプトが出る）へ
       setTimeout(() => {
         setLines(prev => [...prev, { type: "out", text: current.text }]);
-        setTimeout(() => setStep(s => s + 1), 600);
+        setTimeout(() => setStep(s => s + 1), 120);
       }, 180);
     }
   }, [step, phase, onWhoami]);
@@ -92,7 +101,8 @@ function CmdWindow({ onWhoami }) {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
   }, [lines, typing]);
 
-  const onMouseDown = useCallback((e) => {
+  // マウス・タッチ両対応のドラッグ（Pointer Events）
+  const onPointerDown = useCallback((e) => {
     setDragging(true);
     dragStart.current = { mx: e.clientX, my: e.clientY, px: pos.x, py: pos.y };
   }, [pos]);
@@ -106,9 +116,14 @@ function CmdWindow({ onWhoami }) {
       });
     };
     const onUp = () => setDragging(false);
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
   }, [dragging]);
 
   if (closed) return null;
@@ -117,14 +132,17 @@ function CmdWindow({ onWhoami }) {
     <div
       className={styles.cmdWin}
       style={pos.x !== 0 || pos.y !== 0
-        ? { transform: `translateX(calc(-50% + ${pos.x}px)) translateY(${pos.y}px)`, animation: "none" }
+        ? { transform: `translate(${pos.x}px, ${pos.y}px)`, animation: "none" }
         : {}
       }
     >
-      <div className={styles.cmdBar} onMouseDown={onMouseDown} style={{ cursor: "move" }}>
+      <div className={styles.cmdBar} onPointerDown={onPointerDown} style={{ cursor: "move" }}>
         <span className={styles.cmdBarTitle}>mikancel.exe</span>
         <div className={styles.cmdBtns}>
-          <button className={`${styles.cmdBtn} ${styles.cmdClose}`} onClick={() => setClosed(true)}>&#10005;</button>
+          <button
+            className={`${styles.cmdBtn} ${styles.cmdClose}`}
+            onClick={() => { setClosed(true); onClosed?.(); }}
+          >&#10005;</button>
         </div>
       </div>
       <div className={styles.cmdBody} ref={bodyRef}>
@@ -172,6 +190,13 @@ export default function AboutMe() {
     if (what === "location") setTimeout(() => setShowLocation(true), 200);
   }, []);
 
+  // ウィンドウを閉じたら未表示の項目を全て表示する
+  const handleCmdClosed = useCallback(() => {
+    setShowName(true);
+    setShowRole(true);
+    setShowLocation(true);
+  }, []);
+
   return (
     <div className={styles.page}>
 
@@ -183,9 +208,9 @@ export default function AboutMe() {
 
       {/* ── 01: Hero ── */}
       <section className={styles.hero}>
-        <CmdWindow onWhoami={handleWhoami} />
+        <CmdWindow onWhoami={handleWhoami} onClosed={handleCmdClosed} />
 
-        <div className={styles.heroBottom} style={{ bottom: "160px" }}>
+        <div className={styles.heroBottom}>
           <div className={`${styles.heroName} ${showName ? styles.heroNameIn : ""}`}>
             mikancel
           </div>
