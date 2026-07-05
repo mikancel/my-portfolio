@@ -1,7 +1,8 @@
 .editor {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 56px);
+  /* dvh: モバイルブラウザのアドレスバー伸縮に追従 */
+  height: calc(100dvh - 56px);
   overflow: hidden;
 }
 
@@ -389,3 +390,31 @@
 }
 
 .tagNewBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── スマホ対応 ── */
+@media (max-width: 768px) {
+  .titleInput { font-size: 18px; padding: 14px 16px 10px; }
+
+  .metaRow {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  .tabs { padding: 0 16px; }
+
+  .toolbar { padding: 8px 16px; gap: 6px; }
+
+  /* タッチしやすいサイズに */
+  .toolBtn { padding: 7px 12px; font-size: 13px; min-width: 40px; }
+
+  /* 16px未満だとiOSがフォーカス時に自動ズームするため */
+  .textarea { padding: 16px; font-size: 16px; }
+  .tagNewInput { font-size: 16px; padding: 8px 12px; }
+
+  .previewPane { padding: 16px; }
+
+  .footer { padding: 10px 16px; }
+  .draftBtn { padding: 10px 16px; }
+  .publishBtn { padding: 10px 18px; }
+}

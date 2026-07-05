@@ -95,6 +95,7 @@ const TOOLBAR = [
   { label: "~~", wrap: ["~~", "~~"], title: "打ち消し" },
   { label: "`", wrap: ["`", "`"], title: "インラインコード (Ctrl+K)" },
   { label: "```", insert: "\n```\n\n```\n", title: "コードブロック" },
+  { label: "H1", insert: "\n# ", title: "見出し1" },
   { label: "H2", insert: "\n## ", title: "見出し2" },
   { label: "H3", insert: "\n### ", title: "見出し3" },
   { label: ">", insert: "\n> ", title: "引用" },
@@ -207,7 +208,8 @@ export default function PostEditor({ postId: initialPostId }) {
         ctx.drawImage(img, 0, 0, width, height);
 
         const limit = 4.5 * 1024 * 1024;
-        const qualities = [1.0, 0.85, 0.7, 0.5];
+        // 1.0はエンコードが極端に重くサイズも肥大するため0.85から開始（体感差ほぼなし）
+        const qualities = [0.85, 0.7, 0.5];
         const filename = file.name.replace(/\.[^.]+$/, ".webp");
 
         const tryCompress = (i) => {

@@ -14,7 +14,20 @@
   justify-content: space-between;
   padding: 0 24px;
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .header {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    backdrop-filter: blur(12px) saturate(1.5);
+  }
+}
+
+@media (max-width: 768px) {
+  .header { padding: 0 16px; }
+  .main { padding: 32px 16px; }
 }
 
 .logo {

@@ -14,7 +14,15 @@
   justify-content: space-between;
   padding: 0 24px;
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .header {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    backdrop-filter: blur(12px) saturate(1.5);
+  }
 }
 
 .logo {
@@ -158,3 +166,31 @@
 .actionBtn:hover { border-color: var(--accent); color: var(--accent); }
 
 .deleteBtn:hover { border-color: #e53e3e !important; color: #e53e3e !important; }
+
+/* ── スマホ対応 ── */
+@media (max-width: 768px) {
+  .header { padding: 0 16px; }
+  .main { padding: 24px 16px; }
+
+  .postList { gap: 8px; }
+
+  /* 行を縦積みのカードにする */
+  .postRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+  }
+
+  .postTitle { white-space: normal; }
+
+  .postMeta {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* タッチしやすいサイズに */
+  .actionBtn { padding: 8px 14px; font-size: 13px; }
+}

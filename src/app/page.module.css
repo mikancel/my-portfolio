@@ -85,6 +85,11 @@
   gap: 12px;
 }
 
+.heroActionsGroup {
+  display: flex;
+  gap: 12px;
+}
+
 .heroBtn,
 .heroBtnPrimary {
   padding: 10px 24px;

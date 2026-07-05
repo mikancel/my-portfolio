@@ -159,6 +159,7 @@
   color: var(--sub);
   text-decoration: none;
   transition: background 0.15s;
+  white-space: nowrap; /* タグ名の途中改行を防ぐ */
 }
 
 .tag:hover { background: var(--accent); color: #fff; }

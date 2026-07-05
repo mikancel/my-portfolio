@@ -54,15 +54,18 @@ export default async function Home() {
         <h1>Welcome to <span className={styles.accent}>mikancel</span>.com</h1>
         <div className={styles.heroActions}>
           <Link href="/aboutme" className={styles.heroBtnPrimary}>About me →</Link>
-          <Link href="/blog" className={styles.heroBtn}>Blog</Link>
-          <a
-            href="https://github.com/mikancel"
-            target="_blank"
-            rel="noreferrer"
-            className={styles.heroBtn}
-          >
-            GitHub
-          </a>
+          {/* 折り返す時は Blog / GitHub がまとまって下段へ行く */}
+          <div className={styles.heroActionsGroup}>
+            <Link href="/blog" className={styles.heroBtn}>Blog</Link>
+            <a
+              href="https://github.com/mikancel"
+              target="_blank"
+              rel="noreferrer"
+              className={styles.heroBtn}
+            >
+              GitHub
+            </a>
+          </div>
         </div>
       </section>
       <section id="languages" className={styles.langs}>

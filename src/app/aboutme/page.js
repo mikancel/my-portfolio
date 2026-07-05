@@ -237,7 +237,6 @@ export default function AboutMe() {
             ["work",      "業務システムの保守"],
             ["personal",  "Webアプリ開発"],
             ["languages", "日本語 &#47; English &#47; Français"],
-            ["fav_lang",  "Java / Kotlin / Swift"],
           ].map(([k, v]) => (
             <div key={k} className={styles.profileRow}>
               <span className={styles.profileKey}>{k}</span>
@@ -252,11 +251,13 @@ export default function AboutMe() {
         <div ref={refStack} className={`${styles.fade} ${visStack ? styles.fadeIn : ""}`}>
           <p className={styles.labelLight}>&#8212; 02 &#47; Stack</p>
           {[
-            ["frontend", "Next.js / React / Tailwind"],
-            ["backend",  "JavaScript"],
-            ["storage",  "Turso / Cloudflare R2"],
+            ["frontend", "Next.js / React"],
+            ["backend",  "Next.js API Routes"],
+            ["database", "Turso (libSQL)"],
+            ["storage",  "Cloudflare R2"],
             ["auth",     "WebAuthn / iron-session"],
             ["deploy",   "Vercel"],
+            ["favorite", "Java / Kotlin / Swift"],
           ].map(([category, techs]) => (
             <div key={category} className={styles.stackItem}>
               <span className={styles.stackCategory}>{category}</span>
@@ -271,9 +272,8 @@ export default function AboutMe() {
         <div ref={refInterests} className={`${styles.fade} ${visInterests ? styles.fadeIn : ""}`}>
           <p className={styles.labelDark}>&#8212; 03 &#47; Interests</p>
           {[
-            ["Game",     "ゼンレスゾーンゼロ"],
-            ["Anime",    "響け！ユーフォニアム"],
-            ["Learning", "Java / Kotlin"],
+            ["Game",  "ゼンレスゾーンゼロ"],
+            ["Anime", "響け！ユーフォニアム"],
           ].map(([k, v]) => (
             <div key={k} className={styles.interestItem}>
               <span className={styles.interestKey}>{k}</span>

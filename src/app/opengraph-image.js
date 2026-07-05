@@ -1,11 +1,13 @@
 import { ImageResponse } from "next/og";
+import { lineSeedFontsOption } from "@/lib/ogFont";
 
 // サイト共通のOGP画像（/blog/[id] は個別に生成するため、それ以外のページで使われる）
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "mikancel.com";
 
-export default function OgImage() {
+export default async function OgImage() {
+  const fontsOption = await lineSeedFontsOption("mikancel.comPORTFOLIO / BLOG");
   return new ImageResponse(
     (
       <div
@@ -17,6 +19,7 @@ export default function OgImage() {
           alignItems: "center",
           justifyContent: "center",
           background: "linear-gradient(135deg, #f68827 0%, #e0731a 60%, #c85f0e 100%)",
+          fontFamily: "LINESeedJP",
         }}
       >
         <div
@@ -43,6 +46,6 @@ export default function OgImage() {
         </div>
       </div>
     ),
-    size
+    { ...size, ...fontsOption }
   );
 }
