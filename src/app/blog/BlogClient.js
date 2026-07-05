@@ -3,27 +3,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./blog.module.css";
-
-const THUMB_COLORS = [
-  "#c4854a", "#7b9e6b", "#6b8fb5", "#9b7bb5",
-  "#b5896b", "#6bb5a8", "#b56b7b", "#8fb56b",
-  "#a07850", "#5b8c5a", "#4a7fa8", "#8a6aa8",
-  "#c4956a", "#5aa898", "#a84a6b", "#7aa84a",
-  "#d4956b", "#4a9e8b", "#8b4a9e", "#9e8b4a",
-  "#6b9ed4", "#9ed46b", "#d46b9e", "#6bd4b5",
-  "#d4a06b", "#6ba0d4", "#a0d46b", "#d46ba0",
-  "#8b6bd4", "#6bd48b", "#d48b6b", "#6b8bd4",
-  "#c47b7b", "#7bc47b", "#7b7bc4", "#c4b87b",
-  "#7bc4b8", "#b87bc4", "#c4887b", "#7bc488",
-];
-
-function getColor(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return THUMB_COLORS[Math.abs(hash) % THUMB_COLORS.length];
-}
+import { useTheme } from "@/lib/useTheme";
+import { getColor, formatDate } from "@/lib/format";
 
 function Thumbnail({ thumbnail, title }) {
   if (thumbnail) {
@@ -37,72 +18,90 @@ function Thumbnail({ thumbnail, title }) {
   );
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
-}
-
 const LIMIT = 20;
 
 export default function BlogClient({ posts: initialPosts, tags }) {
   const [posts, setPosts] = useState(initialPosts);
   const [activeTags, setActiveTags] = useState([]);
-  const [dark, setDark] = useState(false);
   const [offset, setOffset] = useState(initialPosts.length);
   const [hasMore, setHasMore] = useState(initialPosts.length === LIMIT);
   const [loadingMore, setLoadingMore] = useState(false);
   const sentinelRef = useRef(null);
+  const fetchSeq = useRef(0); // フィルタ切替と読み込みの競合を防ぐ
 
+  const { dark, toggle } = useTheme();
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // サーバーからフィルタ済みの記事を取得する
+  const fetchPosts = useCallback(async (tagIds, currentOffset, replace) => {
+    const seq = ++fetchSeq.current;
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams({
+        limit: String(LIMIT),
+        offset: String(currentOffset),
+      });
+      if (tagIds.length) params.set("tags", tagIds.join(","));
+      const res = await fetch(`/api/blog?${params}`);
+      const data = await res.json();
+      if (seq !== fetchSeq.current) return;
+      const newPosts = data.posts || [];
+      setPosts((prev) => (replace ? newPosts : [...prev, ...newPosts]));
+      setOffset(currentOffset + newPosts.length);
+      setHasMore(newPosts.length === LIMIT);
+    } catch {
+      if (seq === fetchSeq.current) setHasMore(false);
+    } finally {
+      if (seq === fetchSeq.current) setLoadingMore(false);
+    }
+  }, []);
+
+  // URLの ?tag= を初期フィルタとして反映
   useEffect(() => {
     const ids = searchParams.getAll("tag").map(Number).filter(Boolean);
-    if (ids.length > 0) setActiveTags(ids);
+    if (ids.length > 0) {
+      setActiveTags(ids);
+      setPosts([]);
+      fetchPosts(ids, 0, true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = (isDark) => {
-      document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
-      setDark(isDark);
-    };
-    apply(mq.matches);
-    mq.addEventListener("change", (e) => apply(e.matches));
-  }, []);
-
-  const toggle = () => {
-    const next = !dark;
-    document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
-    setDark(next);
-  };
-
-  const toggleTag = (id) => {
-    const numId = Number(id);
-    const next = activeTags.includes(numId)
-      ? activeTags.filter((s) => s !== numId)
-      : [...activeTags, numId];
+  const applyTags = (next) => {
     setActiveTags(next);
     const params = new URLSearchParams();
     next.forEach((t) => params.append("tag", t));
     router.replace(`/blog${next.length > 0 ? `?${params}` : ""}`, { scroll: false });
+
+    if (next.length === 0) {
+      // フィルタ解除はサーバーレンダリング済みの初期一覧に戻す
+      fetchSeq.current++;
+      setPosts(initialPosts);
+      setOffset(initialPosts.length);
+      setHasMore(initialPosts.length === LIMIT);
+      setLoadingMore(false);
+    } else {
+      setPosts([]);
+      fetchPosts(next, 0, true);
+    }
   };
 
-  const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore || activeTags.length > 0) return;
-    setLoadingMore(true);
-    const res = await fetch(`/api/blog?limit=${LIMIT}&offset=${offset}`);
-    const data = await res.json();
-    const newPosts = data.posts || [];
-    setPosts((prev) => [...prev, ...newPosts]);
-    setOffset((prev) => prev + newPosts.length);
-    setHasMore(newPosts.length === LIMIT);
-    setLoadingMore(false);
-  }, [loadingMore, hasMore, offset, activeTags]);
+  const toggleTag = (id) => {
+    const numId = Number(id);
+    applyTags(
+      activeTags.includes(numId)
+        ? activeTags.filter((s) => s !== numId)
+        : [...activeTags, numId]
+    );
+  };
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    fetchPosts(activeTags, offset, false);
+  }, [loadingMore, hasMore, offset, activeTags, fetchPosts]);
 
   useEffect(() => {
-    if (activeTags.length > 0) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) loadMore();
@@ -112,13 +111,7 @@ export default function BlogClient({ posts: initialPosts, tags }) {
     const el = sentinelRef.current;
     if (el) observer.observe(el);
     return () => { if (el) observer.unobserve(el); };
-  }, [loadMore, activeTags]);
-
-  const filteredPosts = activeTags.length === 0
-    ? posts
-    : posts.filter((p) =>
-        activeTags.every((id) => p.tags?.some((t) => Number(t.id) === id))
-      );
+  }, [loadMore]);
 
   return (
     <div className={styles.page}>
@@ -128,10 +121,7 @@ export default function BlogClient({ posts: initialPosts, tags }) {
         <div className={styles.tagFilter}>
           <button
             className={`${styles.tagBtn} ${activeTags.length === 0 ? styles.tagBtnActive : styles.tagBtnInactive}`}
-            onClick={() => {
-              setActiveTags([]);
-              router.replace("/blog", { scroll: false });
-            }}
+            onClick={() => applyTags([])}
           >
             すべて
           </button>
@@ -147,10 +137,12 @@ export default function BlogClient({ posts: initialPosts, tags }) {
         </div>
 
         <div className={styles.postList}>
-          {filteredPosts.length === 0 ? (
-            <p className={styles.empty}>記事がまだありません</p>
+          {posts.length === 0 ? (
+            <p className={styles.empty}>
+              {loadingMore ? "読み込み中..." : "記事がまだありません"}
+            </p>
           ) : (
-            filteredPosts.map((post) => (
+            posts.map((post) => (
               <Link key={post.id} href={`/blog/${post.id}`} className={styles.postCard}>
                 <Thumbnail thumbnail={post.thumbnail} title={post.title} />
                 <div className={styles.postMeta}>
@@ -171,17 +163,17 @@ export default function BlogClient({ posts: initialPosts, tags }) {
           )}
         </div>
 
-        {activeTags.length === 0 && (
-          <div ref={sentinelRef} className={styles.sentinel}>
-            {loadingMore && <div className={styles.loadingMore}>読み込み中...</div>}
-          </div>
-        )}
+        <div ref={sentinelRef} className={styles.sentinel}>
+          {loadingMore && posts.length > 0 && (
+            <div className={styles.loadingMore}>読み込み中...</div>
+          )}
+        </div>
       </main>
 
       <footer className={styles.footer}>
-        <a href="/" className={styles.footerHome}>
+        <Link href="/" className={styles.footerHome}>
           <span className={styles.accent}>mikancel</span>.com
-        </a>
+        </Link>
         <span className={styles.footerCopy}>© 2026 mikancel.</span>
         <button className={styles.themeToggle} onClick={toggle}>
           {dark ? "Light" : "Dark"}
@@ -193,17 +185,17 @@ export default function BlogClient({ posts: initialPosts, tags }) {
 
 function BlogHeader() {
   const [visible, setVisible] = useState(true);
-  const [lastY, setLastY] = useState(0);
+  const lastY = useRef(0);
 
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
-      setVisible(y < lastY || y < 60);
-      setLastY(y);
+      setVisible(y < lastY.current || y < 60);
+      lastY.current = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [lastY]);
+  }, []);
 
   return (
     <header className={`${styles.header} ${visible ? styles.headerVisible : styles.headerHidden}`}>

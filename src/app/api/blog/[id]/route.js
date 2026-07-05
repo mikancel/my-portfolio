@@ -5,6 +5,11 @@ import { revalidatePath } from "next/cache";
 export async function GET(req, { params }) {
   const { id } = await params;
   const all = new URL(req.url).searchParams.get("all") === "1";
+  // 下書きの取得は管理者のみ
+  if (all) {
+    const session = await requireAuth();
+    if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const post = await getPostById(Number(id), !all);
     if (!post) return Response.json({ error: "Not found" }, { status: 404 });
@@ -47,7 +52,6 @@ export async function DELETE(req, { params }) {
     await deletePost(Number(id));
     revalidatePath("/blog");
     revalidatePath(`/blog/${id}`);
-    revalidatePath("/blog/new"); 
     revalidatePath("/");
     return Response.json({ ok: true });
   } catch (e) {

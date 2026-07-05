@@ -40,15 +40,22 @@ export async function deleteFromR2(key) {
 }
 
 export async function deleteFolderFromR2(prefix) {
-  const list = await r2.send(new ListObjectsV2Command({
-    Bucket: BUCKET,
-    Prefix: prefix,
-  }));
-  if (!list.Contents || list.Contents.length === 0) return;
-  await r2.send(new DeleteObjectsCommand({
-    Bucket: BUCKET,
-    Delete: {
-      Objects: list.Contents.map((obj) => ({ Key: obj.Key })),
-    },
-  }));
+  // ListObjectsV2は最大1000件/回のためページングする
+  let continuationToken;
+  do {
+    const list = await r2.send(new ListObjectsV2Command({
+      Bucket: BUCKET,
+      Prefix: prefix,
+      ContinuationToken: continuationToken,
+    }));
+    if (list.Contents?.length) {
+      await r2.send(new DeleteObjectsCommand({
+        Bucket: BUCKET,
+        Delete: {
+          Objects: list.Contents.map((obj) => ({ Key: obj.Key })),
+        },
+      }));
+    }
+    continuationToken = list.IsTruncated ? list.NextContinuationToken : undefined;
+  } while (continuationToken);
 }

@@ -4,16 +4,22 @@ import { revalidatePath } from "next/cache";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
-  const tag = searchParams.get("tag");
   const all = searchParams.get("all") === "1";
-  const limit = Number(searchParams.get("limit") || 20);
-  const offset = Number(searchParams.get("offset") || 0);
+  const limit = Math.min(Math.max(Number(searchParams.get("limit")) || 20, 1), 100);
+  const offset = Math.max(Number(searchParams.get("offset")) || 0, 0);
+  const tagIds = (searchParams.get("tags") || "")
+    .split(",")
+    .map(Number)
+    .filter((n) => Number.isInteger(n) && n > 0);
+
+  // 下書きを含む一覧は管理者のみ
+  if (all) {
+    const session = await requireAuth();
+    if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
-    let posts = await getAllPosts(!all, { limit: tag ? 9999 : limit, offset: tag ? 0 : offset });
-    if (tag) {
-      posts = posts.filter((p) => p.tags.some((t) => t.slug === tag));
-    }
+    const posts = await getAllPosts(!all, { limit, offset, tagIds });
     const tags = await getAllTags();
     return Response.json({ posts, tags });
   } catch (e) {

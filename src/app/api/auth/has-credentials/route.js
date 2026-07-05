@@ -1,5 +1,5 @@
 import { hasCredentials } from "@/lib/db";
 
 export async function GET() {
-  return Response.json({ has: hasCredentials() });
+  return Response.json({ has: await hasCredentials() });
 }

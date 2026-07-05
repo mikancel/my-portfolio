@@ -1,8 +1,19 @@
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 
+export function getSessionSecret() {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SESSION_SECRET must be set in production");
+    }
+    return "dev-only-insecure-session-secret-32chars!!";
+  }
+  return secret;
+}
+
 const sessionOptions = {
-  password: process.env.SESSION_SECRET || "change-this-to-a-long-random-secret-minimum-32chars",
+  password: getSessionSecret(),
   cookieName: "admin_session",
   cookieOptions: {
     secure: process.env.NODE_ENV === "production",

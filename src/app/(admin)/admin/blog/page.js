@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./admin-blog.module.css";
@@ -21,15 +21,17 @@ export default function AdminBlog() {
     });
   }, [router]);
 
-  const loadPosts = () => {
-    setLoading(true);
-    fetch("/api/blog?all=1").then(r => r.json()).then(d => {
-      setPosts(d.posts || []);
-      setLoading(false);
-    });
-  };
+  const loadPosts = useCallback(() => {
+    fetch("/api/blog?all=1")
+      .then(r => r.json())
+      .catch(() => ({}))
+      .then(d => {
+        setPosts(d.posts || []);
+        setLoading(false);
+      });
+  }, []);
 
-  useEffect(() => { loadPosts(); }, []);
+  useEffect(() => { loadPosts(); }, [loadPosts]);
 
   const handleDelete = async (id, title) => {
     if (!confirm(`「${title}」を削除しますか？`)) return;

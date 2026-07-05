@@ -6,56 +6,65 @@ import remarkRehype from "remark-rehype";
 import rehypeHighlight from "rehype-highlight";
 import rehypeStringify from "rehype-stringify";
 
-function generateIds(markdown) {
+// mdast（Markdown AST）から h1-h3 を出現順に抽出して連番IDを振る。
+// 行単位の正規表現と違い、コードブロック内の「# ...」を誤検出しない。
+function collectHeadings(markdown) {
+  const tree = unified().use(remarkParse).use(remarkGfm).parse(markdown || "");
   const counters = { 1: 0, 2: 0, 3: 0 };
   const prefixes = { 1: "alpha", 2: "bravo", 3: "charlie" };
-  const map = [];
+  const headings = [];
 
-  const lines = markdown.split("\n");
-  for (const line of lines) {
-    const m = line.match(/^(#{1,3})\s+(.+)/);
-    if (m) {
-      const level = m[1].length;
-      const text = m[2].replace(/[*_`]/g, "").trim();
-      counters[level]++;
-      const id = `${prefixes[level]}${counters[level]}`;
-      map.push({ level, text, id });
+  const textOf = (node) =>
+    node.value ?? (node.children || []).map(textOf).join("");
+
+  const walk = (node) => {
+    if (node.type === "heading" && node.depth <= 3) {
+      counters[node.depth]++;
+      headings.push({
+        level: node.depth,
+        text: textOf(node).trim(),
+        id: `${prefixes[node.depth]}${counters[node.depth]}`,
+      });
     }
-  }
-  return map;
+    (node.children || []).forEach(walk);
+  };
+  walk(tree);
+  return headings;
+}
+
+// hast（HTML AST）の h1-h3 に、collectHeadings と同じ順序でIDを割り当てる
+function rehypeHeadingIds(ids) {
+  return (tree) => {
+    let idx = 0;
+    const walk = (node) => {
+      if (node.type === "element" && /^h[1-3]$/.test(node.tagName)) {
+        if (ids[idx]) {
+          node.properties = { ...node.properties, id: ids[idx].id };
+        }
+        idx++;
+      }
+      (node.children || []).forEach(walk);
+    };
+    walk(tree);
+  };
 }
 
 export async function markdownToHtml(markdown) {
-  const ids = generateIds(markdown);
-  let idx = 0;
-
-  const processed = markdown.replace(
-    /^(#{1,3})\s+(.+)$/gm,
-    (_, hashes, text) => {
-      const id = ids[idx]?.id || "heading";
-      idx++;
-      return `${hashes} ${text} {#${id}}`;
-    }
-  );
+  const ids = collectHeadings(markdown);
 
   const result = await unified()
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkBreaks)
     .use(remarkRehype, { allowDangerousHtml: true })
+    .use(() => rehypeHeadingIds(ids))
     .use(rehypeHighlight)
     .use(rehypeStringify, { allowDangerousHtml: true })
-    .process(processed);
+    .process(markdown || "");
 
-  const html = String(result).replace(
-    /<(h[1-3])>(.+?)\s*\{#([\w-]+)\}<\/h[1-3]>/g,
-    (_, tag, text, id) => `<${tag} id="${id}">${text}</${tag}>`
-  );
-
-  return html;
+  return String(result);
 }
 
 export function extractToc(markdown) {
-  const ids = generateIds(markdown);
-  return ids.map(({ level, text, id }) => ({ id, text, level }));
+  return collectHeadings(markdown);
 }

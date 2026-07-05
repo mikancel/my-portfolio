@@ -3,13 +3,13 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import HomeClient from "./HomeClient";
 
-export const revalidate = false;
-
-const SKELETON_WIDTHS = [65, 85, 45, 75, 55, 90, 40];
+// 言語グラフ（GitHub API）を1時間ごとに再生成する。
+// ブログ更新時は revalidatePath("/") でも再生成される。
+export const revalidate = 3600;
 
 async function getLanguages() {
   const token = process.env.GITHUB_TOKEN;
-  const repos = await fetch("https://api.github.com/users/mikancel/repos", {
+  const repos = await fetch("https://api.github.com/users/mikancel/repos?per_page=100", {
     headers: { Authorization: `Bearer ${token}` },
     next: { revalidate: 3600 },
   }).then((r) => r.json());

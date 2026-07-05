@@ -5,6 +5,20 @@ import { notFound } from "next/navigation";
 
 export const revalidate = false;
 
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const post = await getPostById(Number(id), true);
+  if (!post) return {};
+  return {
+    title: post.title,
+    openGraph: {
+      title: post.title,
+      type: "article",
+      ...(post.thumbnail ? { images: [post.thumbnail] } : {}),
+    },
+  };
+}
+
 export default async function PostPage({ params }) {
   const { id } = await params;
   const post = await getPostById(Number(id), true);

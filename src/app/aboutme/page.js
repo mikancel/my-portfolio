@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import styles from "./aboutme.module.css";
+import { useTheme } from "@/lib/useTheme";
 
 const TIMELINE = [
   { hash: "dec2001", message: "init: born" },
@@ -29,7 +31,7 @@ function useFadeIn(threshold = 0.1) {
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
-  }, []);
+  }, [threshold]);
   return [ref, visible];
 }
 
@@ -84,7 +86,7 @@ function CmdWindow({ onWhoami }) {
         setTimeout(() => setStep(s => s + 1), 600);
       }, 180);
     }
-  }, [step, phase]);
+  }, [step, phase, onWhoami]);
 
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
@@ -154,7 +156,7 @@ function CmdWindow({ onWhoami }) {
 }
 
 export default function AboutMe() {
-  const [dark, setDark] = useState(false);
+  const { dark, toggle } = useTheme();
   const [showName, setShowName] = useState(false);
   const [showRole, setShowRole] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
@@ -164,35 +166,19 @@ export default function AboutMe() {
   const [refInterests, visInterests] = useFadeIn();
   const [refTimeline,  visTimeline]  = useFadeIn();
 
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = (isDark) => {
-      document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
-      setDark(isDark);
-    };
-    apply(mq.matches);
-    mq.addEventListener("change", (e) => apply(e.matches));
-  }, []);
-
   const handleWhoami = useCallback((what) => {
     if (what === "name")     setTimeout(() => setShowName(true), 200);
     if (what === "role")     setTimeout(() => setShowRole(true), 200);
     if (what === "location") setTimeout(() => setShowLocation(true), 200);
   }, []);
 
-  const toggle = () => {
-    const next = !dark;
-    document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
-    setDark(next);
-  };
-
   return (
     <div className={styles.page}>
 
       <nav className={styles.nav}>
-        <a href="/" className={styles.navLogo}>
+        <Link href="/" className={styles.navLogo}>
           <span className={styles.accent}>mikancel</span>.com
-        </a>
+        </Link>
       </nav>
 
       {/* ── 01: Hero ── */}

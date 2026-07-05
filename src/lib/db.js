@@ -14,47 +14,70 @@ export function getDb() {
 
 // ---- Posts ----
 
-function parsePostRow(row) {
-  if (!row) return null;
-  const tags = row.tag_data
-    ? row.tag_data.split("||").map((s) => {
-        const [id, name, slug] = s.split("::");
-        return { id: Number(id), name, slug };
-      })
-    : [];
-  return { ...row, published: !!row.published, tags };
+// 記事配列にタグを付与する（区切り文字に依存しない安全な方式）
+async function attachTags(rows) {
+  const posts = rows.map((r) => ({ ...r, published: !!r.published, tags: [] }));
+  if (!posts.length) return posts;
+
+  const db = getDb();
+  const ids = posts.map((p) => p.id);
+  const placeholders = ids.map(() => "?").join(",");
+  const result = await db.execute({
+    sql: `SELECT pt.post_id, t.id, t.name, t.slug
+          FROM post_tags pt JOIN tags t ON t.id = pt.tag_id
+          WHERE pt.post_id IN (${placeholders})
+          ORDER BY t.name`,
+    args: ids,
+  });
+
+  const byPost = new Map(posts.map((p) => [p.id, p.tags]));
+  for (const row of result.rows) {
+    byPost.get(row.post_id)?.push({ id: row.id, name: row.name, slug: row.slug });
+  }
+  return posts;
 }
 
-const POST_SELECT = `
-  SELECT p.*,
-    GROUP_CONCAT(t.id || '::' || t.name || '::' || t.slug, '||') AS tag_data
-  FROM posts p
-  LEFT JOIN post_tags pt ON pt.post_id = p.id
-  LEFT JOIN tags t ON t.id = pt.tag_id
-`;
-
-export async function getAllPosts(publishedOnly = true, { limit = 20, offset = 0 } = {}) {
+export async function getAllPosts(
+  publishedOnly = true,
+  { limit = 20, offset = 0, tagIds = [] } = {}
+) {
   const db = getDb();
+  const where = [];
+  const args = [];
+
+  if (publishedOnly) where.push("p.published = 1");
+  if (tagIds.length) {
+    // 指定タグを全て持つ記事のみ
+    where.push(
+      `p.id IN (SELECT post_id FROM post_tags
+                WHERE tag_id IN (${tagIds.map(() => "?").join(",")})
+                GROUP BY post_id
+                HAVING COUNT(DISTINCT tag_id) = ?)`
+    );
+    args.push(...tagIds, tagIds.length);
+  }
+  args.push(limit, offset);
+
   const result = await db.execute({
-    sql: `${POST_SELECT}
-     ${publishedOnly ? "WHERE p.published = 1" : ""}
-     GROUP BY p.id
-     ORDER BY COALESCE(p.published_at, p.created_at) DESC
-     LIMIT ? OFFSET ?`,
-    args: [limit, offset],
+    sql: `SELECT p.* FROM posts p
+          ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+          ORDER BY COALESCE(p.published_at, p.created_at) DESC
+          LIMIT ? OFFSET ?`,
+    args,
   });
-  return result.rows.map(parsePostRow);
+  return attachTags(result.rows);
 }
 
 export async function getPostById(id, publishedOnly = true) {
   const db = getDb();
   const result = await db.execute({
-    sql: `${POST_SELECT}
-     WHERE p.id = ? ${publishedOnly ? "AND p.published = 1" : ""}
-     GROUP BY p.id`,
+    sql: `SELECT p.* FROM posts p
+          WHERE p.id = ? ${publishedOnly ? "AND p.published = 1" : ""}`,
     args: [id],
   });
-  return parsePostRow(result.rows[0] || null);
+  if (!result.rows.length) return null;
+  const [post] = await attachTags(result.rows);
+  return post;
 }
 
 export async function getLatestPostId() {
@@ -73,7 +96,7 @@ export async function createPost({ title, content, thumbnail, published = false,
     sql: `INSERT INTO posts (title, content, thumbnail, published, published_at) VALUES (?,?,?,?,?)`,
     args: [title, content, thumbnail ?? null, published ? 1 : 0, publishedAt],
   });
-  const id = result.lastInsertRowid;
+  const id = Number(result.lastInsertRowid);
   if (tagIds.length) await syncPostTags(id, tagIds);
   return getPostById(id, false);
 }
@@ -93,17 +116,6 @@ export async function updatePost(id, { title, content, thumbnail, published, tag
   const publishedAt =
     newPublished && !current.published_at ? new Date().toISOString() : current.published_at;
 
-  // 削除された画像をR2から消す
-  if (content !== undefined) {
-    const oldUrls = extractR2Urls(current.content);
-    const newUrls = extractR2Urls(content);
-    const deleted = oldUrls.filter((url) => !newUrls.includes(url));
-    for (const url of deleted) {
-      const key = url.replace("https://pic.mikancel.com/", "");
-      await deleteFromR2(key);
-    }
-  }
-
   await db.execute({
     sql: `UPDATE posts SET title=?, content=?, thumbnail=?, published=?, published_at=? WHERE id=?`,
     args: [
@@ -118,10 +130,19 @@ export async function updatePost(id, { title, content, thumbnail, published, tag
   if (tagIds !== undefined) await syncPostTags(id, tagIds);
 
   // 使われていないタグを削除
-  await db.execute({
-    sql: `DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)`,
-    args: [],
-  });
+  await db.execute(
+    `DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)`
+  );
+
+  // 本文から消えた画像をR2から削除（DB更新成功後に実行）
+  if (content !== undefined) {
+    const oldUrls = extractR2Urls(current.content);
+    const newUrls = extractR2Urls(content);
+    const deleted = oldUrls.filter((url) => !newUrls.includes(url));
+    await Promise.all(
+      deleted.map((url) => deleteFromR2(url.replace("https://pic.mikancel.com/", "")))
+    );
+  }
 
   return getPostById(id, false);
 }
@@ -133,25 +154,29 @@ export async function deletePost(id) {
     args: [id],
   });
   if (result.rows.length === 0) throw new Error("Post not found");
-  if (result.rows.length > 1) throw new Error("Unexpected multiple rows");
 
   await deleteFolderFromR2(`blog/${id}/`);
-  await db.execute({ sql: "DELETE FROM posts WHERE id = ?", args: [id] });
-  await db.execute({
-    sql: `DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)`,
-    args: [],
-  });
+  await db.batch(
+    [
+      { sql: "DELETE FROM posts WHERE id = ?", args: [id] },
+      { sql: "DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)", args: [] },
+    ],
+    "write"
+  );
 }
 
 async function syncPostTags(postId, tagIds) {
   const db = getDb();
-  await db.execute({ sql: "DELETE FROM post_tags WHERE post_id = ?", args: [postId] });
-  for (const tid of tagIds) {
-    await db.execute({
-      sql: "INSERT OR IGNORE INTO post_tags (post_id, tag_id) VALUES (?,?)",
-      args: [postId, tid],
-    });
-  }
+  await db.batch(
+    [
+      { sql: "DELETE FROM post_tags WHERE post_id = ?", args: [postId] },
+      ...tagIds.map((tid) => ({
+        sql: "INSERT OR IGNORE INTO post_tags (post_id, tag_id) VALUES (?,?)",
+        args: [postId, tid],
+      })),
+    ],
+    "write"
+  );
 }
 
 // ---- Tags ----

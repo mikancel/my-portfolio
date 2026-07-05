@@ -5,35 +5,10 @@ import styles from "./post.module.css";
 import "highlight.js/styles/github-dark.css";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
+import { useTheme } from "@/lib/useTheme";
+import { getColor, formatDate } from "@/lib/format";
 
 const HEADER_HEIGHT = 56;
-
-function formatDate(dateStr) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
-}
-
-const THUMB_COLORS = [
-  "#c4854a", "#7b9e6b", "#6b8fb5", "#9b7bb5",
-  "#b5896b", "#6bb5a8", "#b56b7b", "#8fb56b",
-  "#a07850", "#5b8c5a", "#4a7fa8", "#8a6aa8",
-  "#c4956a", "#5aa898", "#a84a6b", "#7aa84a",
-  "#d4956b", "#4a9e8b", "#8b4a9e", "#9e8b4a",
-  "#6b9ed4", "#9ed46b", "#d46b9e", "#6bd4b5",
-  "#d4a06b", "#6ba0d4", "#a0d46b", "#d46ba0",
-  "#8b6bd4", "#6bd48b", "#d48b6b", "#6b8bd4",
-  "#c47b7b", "#7bc47b", "#7b7bc4", "#c4b87b",
-  "#7bc4b8", "#b87bc4", "#c4887b", "#7bc488",
-];
-
-function getColor(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return THUMB_COLORS[Math.abs(hash) % THUMB_COLORS.length];
-}
 
 function Thumbnail({ src, title }) {
   if (!src) {
@@ -176,7 +151,7 @@ function useScrollHeader() {
 export default function PostClient({ post, html, toc }) {
   const [tocOpen, setTocOpen] = useState(false);
   const [lightbox, setLightbox] = useState({ open: false, slides: [], index: 0 });
-  const [dark, setDark] = useState(false);
+  const { dark, toggle } = useTheme();
 
   const { headerRef, setTocOpenRef, handleTocClick } = useScrollHeader();
 
@@ -191,26 +166,6 @@ export default function PostClient({ post, html, toc }) {
     setTocOpen(false);
     setTocOpenRef(false);
   }, [setTocOpenRef]);
-
-  useEffect(() => {
-    document.title = post.title;
-  }, [post.title]);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = (isDark) => {
-      document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
-      setDark(isDark);
-    };
-    apply(mq.matches);
-    mq.addEventListener("change", (e) => apply(e.matches));
-  }, []);
-
-  const toggle = () => {
-    const next = !dark;
-    document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
-    setDark(next);
-  };
 
   useEffect(() => {
     if (!html) return;
@@ -335,9 +290,9 @@ export default function PostClient({ post, html, toc }) {
       </article>
 
       <footer className={styles.footer}>
-        <a href="/" className={styles.footerHome}>
+        <Link href="/" className={styles.footerHome}>
           <span className={styles.accent}>mikancel</span>.com
-        </a>
+        </Link>
         <span className={styles.footerCopy}>© 2026 mikancel.</span>
         <button className={styles.themeToggle} onClick={toggle}>
           {dark ? "Light" : "Dark"}

@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import styles from "./editor.module.css";
 
 // ---- TagSelector ----
@@ -90,8 +89,19 @@ function TagSelector({ selected, onChange }) {
 
 // ---- PostEditor ----
 
+const TOOLBAR = [
+  { label: "B", wrap: ["**", "**"], title: "太字 (Ctrl+B)" },
+  { label: "I", wrap: ["*", "*"], title: "斜体 (Ctrl+I)" },
+  { label: "~~", wrap: ["~~", "~~"], title: "打ち消し" },
+  { label: "`", wrap: ["`", "`"], title: "インラインコード (Ctrl+K)" },
+  { label: "```", insert: "\n```\n\n```\n", title: "コードブロック" },
+  { label: "H2", insert: "\n## ", title: "見出し2" },
+  { label: "H3", insert: "\n### ", title: "見出し3" },
+  { label: ">", insert: "\n> ", title: "引用" },
+  { label: "---", insert: "\n---\n", title: "水平線" },
+];
+
 export default function PostEditor({ postId: initialPostId }) {
-  const router = useRouter();
   const [postId, setPostId] = useState(initialPostId || null);
   const isEdit = !!initialPostId;
 
@@ -160,9 +170,11 @@ export default function PostEditor({ postId: initialPostId }) {
       return null;
     }
     setPostId(data.id);
-    router.replace(`/admin/blog/${data.id}/edit`);
+    // router.replace だとコンポーネントが再マウントされ編集中の内容が失われるため、
+    // URLだけ差し替える
+    window.history.replaceState(null, "", `/admin/blog/${data.id}/edit`);
     return data.id;
-  }, [postId, title, content, tags, thumbnail, router]);
+  }, [postId, title, content, tags, thumbnail]);
 
   async function compressImage(file) {
     if (file.type === "image/gif") return { blob: file, contentType: "image/gif", filename: file.name };
@@ -170,6 +182,10 @@ export default function PostEditor({ postId: initialPostId }) {
     return new Promise((resolve) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null); // 読み込めない画像はスキップ
+      };
       img.onload = () => {
         URL.revokeObjectURL(url);
         const maxSize = 1920;
@@ -210,6 +226,34 @@ export default function PostEditor({ postId: initialPostId }) {
     });
   }
 
+  const insertAtCursor = useCallback((text) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const newVal = content.slice(0, start) + text + content.slice(end);
+    setContent(newVal);
+    setTimeout(() => {
+      ta.selectionStart = ta.selectionEnd = start + text.length;
+      ta.focus();
+    }, 0);
+  }, [content]);
+
+  const wrapText = useCallback((before, after) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = content.slice(start, end);
+    const newVal = content.slice(0, start) + before + selected + after + content.slice(end);
+    setContent(newVal);
+    setTimeout(() => {
+      ta.selectionStart = start + before.length;
+      ta.selectionEnd = end + before.length;
+      ta.focus();
+    }, 0);
+  }, [content]);
+
   const uploadFiles = useCallback(async (files, isThumbnail = false) => {
     const id = await ensurePostId();
     if (!id) return;
@@ -223,6 +267,10 @@ export default function PostEditor({ postId: initialPostId }) {
 
       if (file.type.startsWith("image/")) {
         const compressed = await compressImage(file);
+        if (!compressed) {
+          setMessage({ type: "error", text: `${file.name} を読み込めませんでした` });
+          continue;
+        }
         if (compressed.blob.size > 4.5 * 1024 * 1024) {
           setMessage({ type: "error", text: `${file.name} は圧縮後も4.5MBを超えています` });
           continue;
@@ -272,7 +320,7 @@ export default function PostEditor({ postId: initialPostId }) {
       }
     }
     setUploading(false);
-  }, [ensurePostId]);
+  }, [ensurePostId, insertAtCursor]);
 
   const handleDrop = useCallback(async (e) => {
     e.preventDefault();
@@ -287,34 +335,6 @@ export default function PostEditor({ postId: initialPostId }) {
     await uploadFiles(files);
     e.target.value = "";
   }, [uploadFiles]);
-
-  function insertAtCursor(text) {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const newVal = content.slice(0, start) + text + content.slice(end);
-    setContent(newVal);
-    setTimeout(() => {
-      ta.selectionStart = ta.selectionEnd = start + text.length;
-      ta.focus();
-    }, 0);
-  }
-
-  function wrapText(before, after) {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const selected = content.slice(start, end);
-    const newVal = content.slice(0, start) + before + selected + after + content.slice(end);
-    setContent(newVal);
-    setTimeout(() => {
-      ta.selectionStart = start + before.length;
-      ta.selectionEnd = end + before.length;
-      ta.focus();
-    }, 0);
-  }
 
   const handleKeyDown = (e) => {
     const isMac = navigator.platform.toUpperCase().includes("MAC");
@@ -331,18 +351,6 @@ export default function PostEditor({ postId: initialPostId }) {
       wrapText(pair[0], pair[1]);
     }
   };
-
-  const toolbar = [
-    { label: "B", action: () => wrapText("**", "**"), title: "太字 (Ctrl+B)" },
-    { label: "I", action: () => wrapText("*", "*"), title: "斜体 (Ctrl+I)" },
-    { label: "~~", action: () => wrapText("~~", "~~"), title: "打ち消し" },
-    { label: "`", action: () => wrapText("`", "`"), title: "インラインコード (Ctrl+K)" },
-    { label: "```", action: () => insertAtCursor("\n```\n\n```\n"), title: "コードブロック" },
-    { label: "H2", action: () => insertAtCursor("\n## "), title: "見出し2" },
-    { label: "H3", action: () => insertAtCursor("\n### "), title: "見出し3" },
-    { label: ">", action: () => insertAtCursor("\n> "), title: "引用" },
-    { label: "---", action: () => insertAtCursor("\n---\n"), title: "水平線" },
-  ];
 
   const handleSave = async (pub = published) => {
     if (!title.trim()) {
@@ -372,7 +380,7 @@ export default function PostEditor({ postId: initialPostId }) {
       setPublished(pub);
       if (!currentId) {
         setPostId(data.id);
-        setTimeout(() => router.replace(`/admin/blog/${data.id}/edit`), 800);
+        window.history.replaceState(null, "", `/admin/blog/${data.id}/edit`);
       }
     }
   };
@@ -440,11 +448,11 @@ export default function PostEditor({ postId: initialPostId }) {
 
       {tab === "write" && (
         <div className={styles.toolbar}>
-          {toolbar.map(t => (
+          {TOOLBAR.map(t => (
             <button
               key={t.label}
               className={styles.toolBtn}
-              onClick={t.action}
+              onClick={() => (t.wrap ? wrapText(t.wrap[0], t.wrap[1]) : insertAtCursor(t.insert))}
               title={t.title}
             >
               {t.label}

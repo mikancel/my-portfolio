@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 
+const secret = process.env.SESSION_SECRET;
+if (!secret && process.env.NODE_ENV === "production") {
+  throw new Error("SESSION_SECRET must be set in production");
+}
+
 const SESSION_OPTIONS = {
-  password: process.env.SESSION_SECRET || "change-this-to-a-long-random-secret-minimum-32chars",
+  password: secret || "dev-only-insecure-session-secret-32chars!!",
   cookieName: "admin_session",
 };
 
-export async function middleware(req) {
+export async function proxy(req) {
   const { pathname, hostname } = req.nextUrl;
 
   // /adminへの直接アクセスをブロック（本番環境のみ）
@@ -24,7 +29,7 @@ export async function middleware(req) {
 
   if (!isAdminDomain) return NextResponse.next();
 
-  // _next静的ファイルは通す
+  // _next静的ファイルとAPIは通す（APIは各routeで認証）
   if (pathname.startsWith("/_next") || pathname.startsWith("/api/")) {
     return NextResponse.next();
   }

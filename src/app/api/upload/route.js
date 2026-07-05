@@ -18,10 +18,19 @@ export async function POST(req) {
       return Response.json({ error: "Invalid file type" }, { status: 400 });
     }
 
-    const ext = filename.split(".").pop();
+    const idNum = Number(postId);
+    if (!Number.isInteger(idNum) || idNum <= 0) {
+      return Response.json({ error: "Invalid postId" }, { status: 400 });
+    }
+
+    const ext = (filename.split(".").pop() || "").toLowerCase();
+    if (!/^[a-z0-9]{1,10}$/.test(ext)) {
+      return Response.json({ error: "Invalid file extension" }, { status: 400 });
+    }
+
     const key = isThumbnail
-      ? `blog/${postId}/thumbnail.${ext}`
-      : `blog/${postId}/${Date.now()}.${ext}`;
+      ? `blog/${idNum}/thumbnail.${ext}`
+      : `blog/${idNum}/${Date.now()}.${ext}`;
 
     const { url, publicUrl } = await getPresignedUploadUrl(key, contentType);
     return Response.json({ url, publicUrl });
