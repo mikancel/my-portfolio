@@ -1,8 +1,16 @@
 import "./globals.css";
 
 export const metadata = {
+  metadataBase: new URL("https://mikancel.com"),
   title: "mikancel.com",
   description: "mikancel's portfolio",
+  openGraph: {
+    siteName: "mikancel.com",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({ children }) {

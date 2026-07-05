@@ -4,7 +4,7 @@
   color: var(--text);
 }
 
-/* Header */
+/* Header（ガラス） */
 .header {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -15,7 +15,15 @@
   justify-content: space-between;
   padding: 0 24px;
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .header {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    backdrop-filter: blur(12px) saturate(1.5);
+  }
 }
 
 .headerLogo {
@@ -61,11 +69,20 @@
   bottom: 0;
   width: min(320px, 85vw);
   background: var(--bg);
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--glass-border);
   z-index: 160;
   transform: translateX(100%);
   transition: transform 0.25s ease;
   overflow-y: auto;
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tocDrawer {
+    /* 文字の可読性を優先し、ヘッダより不透明度を高めに */
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    backdrop-filter: blur(16px) saturate(1.5);
+  }
 }
 
 .tocOpen { transform: translateX(0); }
@@ -85,15 +102,17 @@
 
 .tocLink {
   font-size: 14px;
-  color: var(--sub);
+  /* ガラス背景でも読めるよう本文色ベースでコントラストを確保 */
+  color: var(--text);
+  opacity: 0.85;
   text-decoration: none;
-  line-height: 1.5;
+  line-height: 1.6;
   display: block;
-  padding: 2px 0;
-  transition: color 0.15s;
+  padding: 3px 0;
+  transition: color 0.15s, opacity 0.15s;
 }
 
-.tocLink:hover { color: var(--accent); }
+.tocLink:hover { color: var(--accent); opacity: 1; }
 
 /* Article */
 .article {
@@ -106,6 +125,8 @@
   width: 100%;
   max-height: 360px;
   object-fit: cover;
+  /* 透過画像用のニュートラル背景 */
+  background: var(--card-bg);
 }
 
 .heroPlaceholder {

@@ -91,18 +91,31 @@ function useScrollHeader() {
   }, [applyTranslate]);
 
   useEffect(() => {
-    lastScrollY.current = window.scrollY;
+    // iOSのラバーバンド（範囲外へのバウンス）でdeltaが暴れないようクランプする
+    const getY = () => {
+      const max = Math.max(
+        document.documentElement.scrollHeight - window.innerHeight,
+        0
+      );
+      return Math.min(Math.max(window.scrollY, 0), max);
+    };
+
+    lastScrollY.current = getY();
+
+    // scrollend対応ブラウザでは「スクロールが本当に止まった時」だけスナップし、
+    // 慣性スクロール中にタイマーが発火してカクつくのを防ぐ
+    const supportsScrollEnd = "onscrollend" in window;
 
     const onScroll = () => {
       if (tocOpenRef.current) return;
 
       if (forceVisible.current) {
         forceVisible.current = false;
-        lastScrollY.current = window.scrollY;
+        lastScrollY.current = getY();
         return;
       }
 
-      const y = window.scrollY;
+      const y = getY();
       const delta = y - lastScrollY.current;
       lastScrollY.current = y;
 
@@ -114,13 +127,24 @@ function useScrollHeader() {
       const next = Math.min(0, Math.max(-HEADER_HEIGHT, translateY.current - delta));
       applyTranslate(next);
 
-      clearTimeout(snapTimer.current);
-      snapTimer.current = setTimeout(snapToEdge, 150);
+      if (!supportsScrollEnd) {
+        clearTimeout(snapTimer.current);
+        snapTimer.current = setTimeout(snapToEdge, 150);
+      }
+    };
+
+    const onScrollEnd = () => {
+      if (tocOpenRef.current) return;
+      snapToEdge();
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
+    if (supportsScrollEnd) {
+      window.addEventListener("scrollend", onScrollEnd, { passive: true });
+    }
     return () => {
       window.removeEventListener("scroll", onScroll);
+      if (supportsScrollEnd) window.removeEventListener("scrollend", onScrollEnd);
       clearTimeout(snapTimer.current);
     };
   }, [applyTranslate, snapToEdge]);

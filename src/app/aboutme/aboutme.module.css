@@ -6,22 +6,31 @@
   transition: background 0.3s, color 0.3s;
 }
 
-/* ── Nav ── */
+/* ── Nav（他ページと統一のガラスヘッダ） ── */
 .nav {
   position: sticky;
   top: 0;
   z-index: 100;
   display: flex;
   align-items: center;
-  padding: 14px 32px;
-  border-bottom: 1px solid var(--border);
+  height: 56px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--glass-border);
   background-color: var(--bg);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav {
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    backdrop-filter: blur(12px) saturate(1.5);
+  }
 }
 
 .navLogo {
   font-weight: bold;
-  font-size: 18px;
-  letter-spacing: -0.5px;
+  font-size: 15px;
+  letter-spacing: -0.3px;
   text-decoration: none;
   color: var(--text);
 }
@@ -43,11 +52,11 @@
 /* ════════════════════════════
    Hero
 ════════════════════════════ */
-/* nav(約53px)の下に100svh分。コマンドウィンドウと名前は
+/* nav(57px)の下に100svh分。コマンドウィンドウと名前は
    フレックスの通常フローで並べ、物理的に重ならないようにする */
 .hero {
   background: #0a0a0a;
-  min-height: calc(100svh - 53px);
+  min-height: calc(100svh - 57px);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -396,11 +405,11 @@
 /* ── Responsive ── */
 @media (max-width: 768px) {
   /* Nav */
-  .nav { padding: 12px 16px; }
+  .nav { padding: 0 16px; }
   .themeToggle { right: 16px; }
 
   /* Hero */
-  .hero { min-height: calc(100svh - 49px); }
+  .hero { min-height: calc(100svh - 57px); }
   .cmdWin {
     margin: 4vh auto 32px;
     width: calc(100% - 32px);

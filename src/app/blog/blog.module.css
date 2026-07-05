@@ -4,7 +4,7 @@
   color: var(--text);
 }
 
-/* Header */
+/* Header（常時表示のガラスヘッダ） */
 .header {
   position: fixed;
   top: 0;
@@ -16,12 +16,16 @@
   align-items: center;
   padding: 0 24px;
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
-  transition: transform 0.25s ease;
+  border-bottom: 1px solid var(--glass-border);
 }
 
-.headerVisible { transform: translateY(0); }
-.headerHidden  { transform: translateY(-100%); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .header {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    backdrop-filter: blur(12px) saturate(1.5);
+  }
+}
 
 .headerLogo {
   font-weight: bold;
@@ -51,20 +55,28 @@
 .tagBtn {
   padding: 4px 14px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: none;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-card);
   color: var(--sub);
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
   font-family: inherit;
+}
+
+.tagBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .tagBtnActive {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
+
+.tagBtnActive:hover { color: #fff; }
 
 .tagBtnInactive {
   background: none;
@@ -81,13 +93,17 @@
   gap: 16px;
   padding: 16px 12px;
   border-radius: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-card);
   text-decoration: none;
   color: var(--text);
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
-.postCard:hover { background: var(--border); }
+.postCard:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
 
 /* Thumbnail */
 .thumbImg {
@@ -96,6 +112,8 @@
   object-fit: cover;
   border-radius: 8px;
   flex-shrink: 0;
+  /* 透過画像用のニュートラル背景 */
+  background: var(--card-bg);
 }
 
 .thumbPlaceholder {

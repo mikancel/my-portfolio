@@ -5,7 +5,7 @@
   transition: background 0.3s, color 0.3s;
 }
 
-/* Nav */
+/* Nav（ガラス） */
 .nav {
   position: sticky;
   top: 0;
@@ -15,8 +15,16 @@
   align-items: center;
   padding: 0 24px;
   height: 56px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--glass-border);
   background-color: var(--bg);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav {
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    backdrop-filter: blur(12px) saturate(1.5);
+  }
 }
 
 .navLogo {
@@ -50,14 +58,63 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 128px 32px;
+  min-height: calc(78svh - 57px);
+  padding: 96px 32px;
+}
+
+.heroLabel {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  margin-bottom: 20px;
 }
 
 .hero h1 {
-  font-size: 48px;
-  font-weight: bold;
+  font-size: clamp(36px, 6.5vw, 68px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
   margin-bottom: 40px;
-  line-height: 1.2;
+  line-height: 1.15;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.heroBtn,
+.heroBtnPrimary {
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.heroBtn {
+  border: 1px solid var(--glass-border);
+  background: var(--glass-card);
+  color: var(--text);
+}
+
+.heroBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.heroBtnPrimary {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.heroBtnPrimary:hover {
+  box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
 /* Languages */
@@ -92,7 +149,11 @@
 
 .langFill {
   height: 6px;
-  background-color: var(--accent);
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    color-mix(in srgb, var(--accent) 65%, #ffd9a8)
+  );
   border-radius: 999px;
   transition: width 0.5s ease;
 }
@@ -106,7 +167,9 @@
 
 .sectionLabel {
   font-size: 12px;
-  color: var(--sub);
+  font-weight: bold;
+  color: var(--accent);
+  letter-spacing: 0.18em;
   margin-bottom: 8px;
 }
 
@@ -120,18 +183,19 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
   padding: 16px 24px;
   text-decoration: none;
   color: var(--text);
-  background-color: var(--card-bg);
+  background-color: var(--glass-card);
   margin-bottom: 8px;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .contactLink:hover {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .contactLink span:first-child {
@@ -243,18 +307,24 @@
   gap: 12px;
   padding: 12px;
   border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-card);
   text-decoration: none;
   color: var(--text);
-  transition: background 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.blogCard:hover { background: var(--border); }
+.blogCard:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
 
 .blogCardThumb {
   width: 48px;
   height: 48px;
   border-radius: 6px;
-  background: var(--accent);
+  /* 透過画像でもオレンジが透けないようニュートラルな背景に */
+  background: var(--card-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -263,6 +333,11 @@
   color: #fff;
   flex-shrink: 0;
   overflow: hidden;
+}
+
+/* 画像なし（頭文字表示）のときだけアクセント背景 */
+.blogCardThumbPlaceholder {
+  background: var(--accent);
 }
 
 .blogCardThumb img {

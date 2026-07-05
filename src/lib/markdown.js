@@ -68,3 +68,20 @@ export async function markdownToHtml(markdown) {
 export function extractToc(markdown) {
   return collectHeadings(markdown);
 }
+
+// OGP説明文用に本文からプレーンテキストの抜粋を作る
+export function extractExcerpt(markdown, maxLength = 120) {
+  if (!markdown) return "";
+  const text = markdown
+    .replace(/```[\s\S]*?```/g, " ")          // コードブロック
+    .replace(/`[^`]*`/g, " ")                  // インラインコード
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")    // 画像
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")  // リンク → テキストのみ
+    .replace(/<[^>]+>/g, " ")                  // HTMLタグ
+    .replace(/^#{1,6}\s+/gm, "")              // 見出し記号
+    .replace(/[*_~>|]/g, "")                   // 装飾記号
+    .replace(/^[-+]\s+/gm, "")                // リスト記号
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+}

@@ -50,20 +50,27 @@ export default async function Home() {
       </nav>
 
       <section className={styles.hero}>
+        <p className={styles.heroLabel}>SE / Developer — Aichi, Japan</p>
         <h1>Welcome to <span className={styles.accent}>mikancel</span>.com</h1>
-      </section>
-      <section className={styles.contact}>
-        <p className={styles.sectionLabel}>About</p>
-        <h2>About me</h2>
-        <a href="/aboutme" className={styles.contactLink}>
-          <span>About me</span>
-        </a>
+        <div className={styles.heroActions}>
+          <Link href="/aboutme" className={styles.heroBtnPrimary}>About me →</Link>
+          <Link href="/blog" className={styles.heroBtn}>Blog</Link>
+          <a
+            href="https://github.com/mikancel"
+            target="_blank"
+            rel="noreferrer"
+            className={styles.heroBtn}
+          >
+            GitHub
+          </a>
+        </div>
       </section>
       <section id="languages" className={styles.langs}>
-        <p className={styles.sectionLabel}>Languages</p>
+        <p className={styles.sectionLabel}>— 01 / Languages</p>
         <h2>言語</h2>
         {Object.entries(langs)
           .sort((a, b) => b[1] - a[1])
+          .slice(0, 8)
           .map(([lang, bytes]) => {
             const pct = Math.round((bytes / total) * 100);
             return (
@@ -80,7 +87,7 @@ export default async function Home() {
       </section>
 
       <section id="blog" className={styles.blogSection}>
-        <p className={styles.sectionLabel}>Blog</p>
+        <p className={styles.sectionLabel}>— 02 / Blog</p>
         <h2>ブログ</h2>
         <div className={styles.blogList}>
           {recentPosts.length === 0 ? (
@@ -88,7 +95,7 @@ export default async function Home() {
           ) : (
             recentPosts.map((post) => (
               <Link key={post.id} href={`/blog/${post.id}`} className={styles.blogCard}>
-                <div className={styles.blogCardThumb}>
+                <div className={`${styles.blogCardThumb} ${post.thumbnail ? "" : styles.blogCardThumbPlaceholder}`}>
                   {post.thumbnail
                     ? <img src={post.thumbnail} alt={post.title} />
                     : <span>{post.title?.charAt(0)}</span>}
@@ -102,7 +109,7 @@ export default async function Home() {
       </section>
 
       <section id="social" className={styles.contact}>
-        <p className={styles.sectionLabel}>Social</p>
+        <p className={styles.sectionLabel}>— 03 / Social</p>
         <h2>ソーシャル</h2>
         <a href="https://x.com/kankitsu_mikan" target="_blank" className={styles.contactLink}>
           <span>X</span><span>&#64;kankitsu_mikan</span>

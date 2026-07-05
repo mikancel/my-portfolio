@@ -184,21 +184,9 @@ export default function BlogClient({ posts: initialPosts, tags }) {
 }
 
 function BlogHeader() {
-  const [visible, setVisible] = useState(true);
-  const lastY = useRef(0);
-
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      setVisible(y < lastY.current || y < 60);
-      lastY.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
+  // ガラス化に伴い常時表示（隠す挙動によるチラつきを廃止）
   return (
-    <header className={`${styles.header} ${visible ? styles.headerVisible : styles.headerHidden}`}>
+    <header className={styles.header}>
       <Link href="/blog" className={styles.headerLogo}>
         <span className={styles.accent}>mikancel</span>.com/blog
       </Link>
