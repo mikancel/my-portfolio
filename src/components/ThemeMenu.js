@@ -42,7 +42,7 @@ export default function ThemeMenu({ className = "" }) {
         aria-label="テーマ切替"
       >
         {/* ボタンには実際に適用中のテーマを表示（System選択中もLight/Dark表記） */}
-        {dark ? "Dark" : "Light"}
+        <span className={styles.triggerLabel}>{dark ? "Dark" : "Light"}</span>
         <span className={styles.caret} aria-hidden="true">▴</span>
       </button>
 

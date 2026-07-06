@@ -24,6 +24,13 @@
   color: var(--accent);
 }
 
+/* Light/Darkどちらの表記でもピル幅が変わらないよう固定幅にする */
+.triggerLabel {
+  display: inline-block;
+  min-width: 36px;
+  text-align: center;
+}
+
 .caret {
   font-size: 9px;
   opacity: 0.7;
