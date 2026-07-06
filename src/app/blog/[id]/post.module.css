@@ -54,11 +54,10 @@
   transform-origin: left;
 }
 
-/* バー直下のガラス帯。高さは純CSS計算のみ:
-   常時 12px ＋ safe-area がある環境ではその分も加算 */
+/* バー直下のガラス帯。高さは safe-area の分だけ（無い環境では0） */
 .progressDockGlass {
   width: 100%;
-  height: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  height: env(safe-area-inset-bottom, 0px);
   background: var(--glass-bg);
 }
 
@@ -91,9 +90,16 @@
   color: var(--accent);
 }
 
-/* 開閉時に回転するのは三角のみ */
+/* 開閉時に回転するのは三角のみ。
+   1em四方のボックス中央にグリフを置き、回転軸を三角の中心に合わせる */
 .tocArrow {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+  transform-origin: center;
   transition: transform 0.2s ease;
 }
 
