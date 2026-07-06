@@ -24,6 +24,8 @@
     background-color: var(--glass-bg);
     -webkit-backdrop-filter: blur(12px) saturate(1.5);
     backdrop-filter: blur(12px) saturate(1.5);
+    /* 合成レイヤーに昇格させ、sticky+blurのスクロール毎再ペイントを防ぐ */
+    transform: translateZ(0);
   }
 }
 
@@ -122,6 +124,9 @@
   box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
+.heroBtn:active,
+.heroBtnPrimary:active { transform: scale(0.97); }
+
 /* Languages */
 .langs {
   padding: 96px 32px;
@@ -203,6 +208,8 @@
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
+.contactLink:active { transform: scale(0.99); }
+
 .contactLink span:first-child {
   font-weight: bold;
 }
@@ -232,53 +239,6 @@
   width: 60px;
   text-align: center;
   font-family: inherit;
-}
-
-/* Skeleton */
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--border) 25%,
-    var(--card-bg) 50%,
-    var(--border) 75%
-  );
-  background-size: 800px 100%;
-  animation: shimmer 1.4s infinite linear;
-  border-radius: 4px;
-}
-
-.skeletonLangItem {
-  margin-bottom: 16px;
-}
-
-.skeletonLangLabel {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-  height: 21px;
-}
-
-.skeletonLangName {
-  height: 14px;
-  border-radius: 4px;
-}
-
-.skeletonLangPct {
-  height: 14px;
-  width: 32px;
-  border-radius: 4px;
-}
-
-.skeletonBar {
-  height: 6px;
-  border-radius: 999px;
-  width: 100%;
 }
 
 /* Blog section */
@@ -323,6 +283,8 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
+
+.blogCard:active { transform: scale(0.99); }
 
 .blogCardThumb {
   width: 48px;

@@ -171,6 +171,27 @@
   padding: 24px;
 }
 
+/* ワイド画面: 編集／プレビューの左右分割 */
+.splitPane {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.splitPane .textarea {
+  width: 50%;
+  flex: none;
+  border-right: 1px solid var(--border);
+}
+
+.splitPane .previewPane {
+  width: 50%;
+  flex: none;
+}
+
+/* スマホ用: タグ・サムネイル欄の折りたたみトグル（デスクトップでは非表示） */
+.metaToggle { display: none; }
+
 .previewLoading {
   color: var(--sub);
   padding: 32px;
@@ -224,6 +245,11 @@
 .msgError {
   font-size: 13px;
   color: #e53e3e;
+}
+
+.msgInfo {
+  font-size: 13px;
+  color: var(--accent);
 }
 
 .msgSuccess {
@@ -298,6 +324,7 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .tagBadgeRemove {
@@ -332,6 +359,7 @@
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 
 .tagExistingBtn:hover {
@@ -394,6 +422,23 @@
 /* ── スマホ対応 ── */
 @media (max-width: 768px) {
   .titleInput { font-size: 18px; padding: 14px 16px 10px; }
+
+  .metaToggle {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--sub);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  /* 折りたたみ時は非表示にして編集領域を広く使う */
+  .metaRowCollapsed { display: none; }
 
   .metaRow {
     flex-direction: column;

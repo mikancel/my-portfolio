@@ -46,11 +46,23 @@ function CmdWindow({ onWhoami, onClosed }) {
   const dragStart = useRef(null);
   const bodyRef = useRef(null);
 
-  // 起動アニメーション後にtypingフェーズへ
+  // 起動アニメーション後にtypingフェーズへ。
+  // 「視差効果を減らす」設定時はタイピングをスキップして全行即表示する
   useEffect(() => {
-    const t = setTimeout(() => setPhase("typing"), 600);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const t = setTimeout(() => {
+      if (reduce) {
+        setLines(SCRIPT.map((s) => ({ type: s.type, text: s.text })));
+        setPhase("waiting");
+        onWhoami("name");
+        onWhoami("role");
+        onWhoami("location");
+      } else {
+        setPhase("typing");
+      }
+    }, reduce ? 0 : 600);
     return () => clearTimeout(t);
-  }, []);
+  }, [onWhoami]);
 
   useEffect(() => {
     if (phase !== "typing") return;

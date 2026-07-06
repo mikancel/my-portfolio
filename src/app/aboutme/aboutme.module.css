@@ -24,6 +24,8 @@
     background-color: var(--glass-bg);
     -webkit-backdrop-filter: blur(12px) saturate(1.5);
     backdrop-filter: blur(12px) saturate(1.5);
+    /* 合成レイヤーに昇格させ、sticky+blurのスクロール毎再ペイントを防ぐ */
+    transform: translateZ(0);
   }
 }
 
@@ -104,7 +106,7 @@
 }
 
 .cmdBarTitle {
-  font-family: 'Ubuntu Mono', monospace !important;
+  font-family: var(--font-ubuntu-mono), monospace !important;
   font-size: 13px;
   color: #cccccc;
   flex: 1;
@@ -139,7 +141,7 @@
   min-height: min(260px, 30vh);
   max-height: clamp(200px, 36vh, 420px);
   overflow-y: auto;
-  font-family: 'Ubuntu Mono', monospace !important;
+  font-family: var(--font-ubuntu-mono), monospace !important;
   font-size: 17px;
   line-height: 1.75;
   color: #cccccc;
@@ -152,7 +154,7 @@
 .cmdBody::-webkit-scrollbar-thumb { background: #333; }
 
 .cmdLine {
-  font-family: 'Ubuntu Mono', monospace !important;
+  font-family: var(--font-ubuntu-mono), monospace !important;
   font-size: 17px;
   line-height: 1.75;
   color: #cccccc;
@@ -348,7 +350,7 @@
 
 /* ── Timeline / git ── */
 .gitCmd {
-  font-family: 'Ubuntu Mono', monospace !important;
+  font-family: var(--font-ubuntu-mono), monospace !important;
   font-size: 15px;
   color: rgba(255,255,255,0.25);
   margin-bottom: 40px;
@@ -371,9 +373,9 @@
 
 .gitIn { opacity: 1; transform: translateX(0); }
 
-.gitTree { font-family: 'Ubuntu Mono', monospace !important; font-size: clamp(40px, 6vw, 88px); color: #4ecdc4; flex-shrink: 0; line-height: 1; }
-.gitHash { font-family: 'Ubuntu Mono', monospace !important; font-size: clamp(40px, 6vw, 88px); color: #f68827; flex-shrink: 0; line-height: 1; }
-.gitMsg  { font-family: 'Ubuntu Mono', monospace !important; font-size: clamp(40px, 6vw, 88px); color: #e0e0e0; line-height: 1; }
+.gitTree { font-family: var(--font-ubuntu-mono), monospace !important; font-size: clamp(40px, 6vw, 88px); color: #4ecdc4; flex-shrink: 0; line-height: 1; }
+.gitHash { font-family: var(--font-ubuntu-mono), monospace !important; font-size: clamp(40px, 6vw, 88px); color: #f68827; flex-shrink: 0; line-height: 1; }
+.gitMsg  { font-family: var(--font-ubuntu-mono), monospace !important; font-size: clamp(40px, 6vw, 88px); color: #e0e0e0; line-height: 1; }
 
 /* ── Footer ── */
 .footer {

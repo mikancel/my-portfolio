@@ -24,6 +24,7 @@
     background: var(--glass-bg);
     -webkit-backdrop-filter: blur(12px) saturate(1.5);
     backdrop-filter: blur(12px) saturate(1.5);
+    transform: translateZ(0); /* 合成レイヤー化で再ペイント抑制 */
   }
 }
 
@@ -106,6 +107,8 @@
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
+.postCard:active { transform: scale(0.99); }
+
 /* Thumbnail */
 .thumbImg {
   width: 72px;
@@ -178,43 +181,6 @@
 
 .empty { color: var(--sub); text-align: center; padding: 64px 0; }
 
-/* Skeleton */
-@keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
-}
-
-.postCardSkeleton {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 12px;
-}
-
-.skeletonThumb {
-  width: 72px; height: 72px;
-  border-radius: 8px;
-  flex-shrink: 0;
-  background: linear-gradient(90deg, var(--border) 25%, var(--card-bg) 50%, var(--border) 75%);
-  background-size: 800px 100%;
-  animation: shimmer 1.4s infinite linear;
-}
-
-.skeletonContent { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-
-.skeletonTitle {
-  height: 16px; width: 75%; border-radius: 4px;
-  background: linear-gradient(90deg, var(--border) 25%, var(--card-bg) 50%, var(--border) 75%);
-  background-size: 800px 100%;
-  animation: shimmer 1.4s infinite linear;
-}
-
-.skeletonMeta {
-  height: 12px; width: 35%; border-radius: 4px;
-  background: linear-gradient(90deg, var(--border) 25%, var(--card-bg) 50%, var(--border) 75%);
-  background-size: 800px 100%;
-  animation: shimmer 1.4s infinite linear;
-}
 .headerLeft {
   display: flex;
   align-items: center;

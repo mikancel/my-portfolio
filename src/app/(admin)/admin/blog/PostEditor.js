@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import styles from "./editor.module.css";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 
 // ---- TagSelector ----
 
@@ -115,22 +116,72 @@ export default function PostEditor({ postId: initialPostId }) {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null); // { done, total }
   const [message, setMessage] = useState({ type: "", text: "" });
   const [tab, setTab] = useState("write");
+  const [metaOpen, setMetaOpen] = useState(false); // スマホでのタグ・サムネイル欄の開閉
   const textareaRef = useRef(null);
   const previewDebounce = useRef(null);
   const fileInputRef = useRef(null);
   const thumbInputRef = useRef(null);
 
+  // ワイド画面では編集とプレビューを左右分割表示にする
+  const isWide = useMediaQuery("(min-width: 1100px)");
+
+  // 未保存変更の検知（保存済みスナップショットとの比較）
+  const savedSnapshot = useRef(JSON.stringify(["", "", [], "", false]));
+  const dirtyRef = useRef(false);
+  const handleSaveRef = useRef(null);
+
+  useEffect(() => {
+    dirtyRef.current =
+      JSON.stringify([title, content, tags, thumbnail, published]) !==
+      savedSnapshot.current;
+  });
+
+  // タブを閉じる・リロード時に未保存変更があれば警告
+  useEffect(() => {
+    const handler = (e) => {
+      if (dirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
+
+  // Ctrl+S / Cmd+S で保存（公開状態は維持）
+  useEffect(() => {
+    const handler = (e) => {
+      const isMac = navigator.platform.toUpperCase().includes("MAC");
+      const mod = isMac ? e.metaKey : e.ctrlKey;
+      if (mod && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        handleSaveRef.current?.();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   useEffect(() => {
     if (!isEdit) return;
     fetch(`/api/blog/${initialPostId}?all=1`).then(r => r.json()).then(data => {
       if (data.error) return;
+      const loadedTags = data.tags?.map(t => t.name) || [];
       setTitle(data.title || "");
       setContent(data.content || "");
-      setTags(data.tags?.map(t => t.name) || []);
+      setTags(loadedTags);
       setThumbnail(data.thumbnail || "");
       setPublished(data.published || false);
+      savedSnapshot.current = JSON.stringify([
+        data.title || "",
+        data.content || "",
+        loadedTags,
+        data.thumbnail || "",
+        data.published || false,
+      ]);
     });
   }, [initialPostId, isEdit]);
 
@@ -148,11 +199,11 @@ export default function PostEditor({ postId: initialPostId }) {
   }, []);
 
   useEffect(() => {
-    if (tab !== "preview") return;
+    if (!isWide && tab !== "preview") return;
     clearTimeout(previewDebounce.current);
     previewDebounce.current = setTimeout(() => refreshPreview(content), 400);
     return () => clearTimeout(previewDebounce.current);
-  }, [content, tab, refreshPreview]);
+  }, [content, tab, isWide, refreshPreview]);
 
   const ensurePostId = useCallback(async () => {
     if (postId) return postId;
@@ -171,6 +222,7 @@ export default function PostEditor({ postId: initialPostId }) {
       return null;
     }
     setPostId(data.id);
+    savedSnapshot.current = JSON.stringify([title, content, tags, thumbnail, false]);
     // router.replace だとコンポーネントが再マウントされ編集中の内容が失われるため、
     // URLだけ差し替える
     window.history.replaceState(null, "", `/admin/blog/${data.id}/edit`);
@@ -257,11 +309,16 @@ export default function PostEditor({ postId: initialPostId }) {
   }, [content]);
 
   const uploadFiles = useCallback(async (files, isThumbnail = false) => {
+    const mediaFiles = files.filter(
+      (f) => f.type.startsWith("image/") || f.type.startsWith("video/")
+    );
+    if (!mediaFiles.length) return;
     const id = await ensurePostId();
     if (!id) return;
     setUploading(true);
-    for (const file of files) {
-      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) continue;
+    let done = 0;
+    setUploadProgress({ done, total: mediaFiles.length });
+    for (const file of mediaFiles) {
 
       let uploadBlob = file;
       let uploadContentType = file.type;
@@ -320,8 +377,12 @@ export default function PostEditor({ postId: initialPostId }) {
           : `\n![](${data.publicUrl})\n`;
         insertAtCursor(tag);
       }
+
+      done++;
+      setUploadProgress({ done, total: mediaFiles.length });
     }
     setUploading(false);
+    setUploadProgress(null);
   }, [ensurePostId, insertAtCursor]);
 
   const handleDrop = useCallback(async (e) => {
@@ -355,6 +416,7 @@ export default function PostEditor({ postId: initialPostId }) {
   };
 
   const handleSave = async (pub = published) => {
+    if (saving) return;
     if (!title.trim()) {
       setMessage({ type: "error", text: "タイトルを入力してください" });
       return;
@@ -380,12 +442,18 @@ export default function PostEditor({ postId: initialPostId }) {
     } else {
       setMessage({ type: "success", text: pub ? "公開しました！" : "下書きを保存しました" });
       setPublished(pub);
+      savedSnapshot.current = JSON.stringify([title, content, tags, thumbnail, pub]);
       if (!currentId) {
         setPostId(data.id);
         window.history.replaceState(null, "", `/admin/blog/${data.id}/edit`);
       }
     }
   };
+
+  // Ctrl+S から最新の handleSave を呼べるように保持
+  useEffect(() => {
+    handleSaveRef.current = () => handleSave();
+  });
 
   return (
     <div className={styles.editor}>
@@ -396,7 +464,16 @@ export default function PostEditor({ postId: initialPostId }) {
         onChange={e => setTitle(e.target.value)}
       />
 
-      <div className={styles.metaRow}>
+      {/* スマホでは折りたたんで編集領域を広く使う */}
+      <button
+        type="button"
+        className={styles.metaToggle}
+        onClick={() => setMetaOpen(v => !v)}
+      >
+        {metaOpen ? "▲ タグ・サムネイル設定を閉じる" : "▼ タグ・サムネイル設定"}
+        {!metaOpen && tags.length > 0 && ` (${tags.length})`}
+      </button>
+      <div className={`${styles.metaRow} ${metaOpen ? "" : styles.metaRowCollapsed}`}>
         <TagSelector selected={tags} onChange={setTags} />
         <div className={styles.thumbnailRow}>
           {thumbnail && (
@@ -433,22 +510,24 @@ export default function PostEditor({ postId: initialPostId }) {
         </div>
       </div>
 
-      <div className={styles.tabs}>
-        <button
-          className={`${styles.tab} ${tab === "write" ? styles.tabActive : ""}`}
-          onClick={() => setTab("write")}
-        >
-          編集
-        </button>
-        <button
-          className={`${styles.tab} ${tab === "preview" ? styles.tabActive : ""}`}
-          onClick={() => setTab("preview")}
-        >
-          プレビュー
-        </button>
-      </div>
+      {!isWide && (
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tab} ${tab === "write" ? styles.tabActive : ""}`}
+            onClick={() => setTab("write")}
+          >
+            編集
+          </button>
+          <button
+            className={`${styles.tab} ${tab === "preview" ? styles.tabActive : ""}`}
+            onClick={() => setTab("preview")}
+          >
+            プレビュー
+          </button>
+        </div>
+      )}
 
-      {tab === "write" && (
+      {(isWide || tab === "write") && (
         <div className={styles.toolbar}>
           {TOOLBAR.map(t => (
             <button
@@ -479,33 +558,50 @@ export default function PostEditor({ postId: initialPostId }) {
         </div>
       )}
 
-      {tab === "write" ? (
-        <textarea
-          ref={textareaRef}
-          className={styles.textarea}
-          placeholder="Markdownで記事を書く...&#10;&#10;画像・動画はここにドラッグ＆ドロップできます"
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onKeyDown={handleKeyDown}
-        />
-      ) : (
-        <div className={styles.previewPane}>
-          {previewLoading ? (
-            <div className={styles.previewLoading}>レンダリング中...</div>
-          ) : (
-            <div
-              className={styles.previewContent}
-              dangerouslySetInnerHTML={{ __html: preview }}
-            />
-          )}
-        </div>
-      )}
+      {(() => {
+        const editorPane = (
+          <textarea
+            ref={textareaRef}
+            className={styles.textarea}
+            placeholder="Markdownで記事を書く...&#10;&#10;画像・動画はここにドラッグ＆ドロップできます"
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onKeyDown={handleKeyDown}
+          />
+        );
+        const previewPane = (
+          <div className={styles.previewPane}>
+            {previewLoading ? (
+              <div className={styles.previewLoading}>レンダリング中...</div>
+            ) : (
+              <div
+                className={styles.previewContent}
+                dangerouslySetInnerHTML={{ __html: preview }}
+              />
+            )}
+          </div>
+        );
+        if (isWide) {
+          // ワイド画面は編集／プレビューを左右分割
+          return (
+            <div className={styles.splitPane}>
+              {editorPane}
+              {previewPane}
+            </div>
+          );
+        }
+        return tab === "write" ? editorPane : previewPane;
+      })()}
 
       <div className={styles.footer}>
         <div className={styles.footerLeft}>
-          {message.text && (
+          {uploadProgress ? (
+            <span className={styles.msgInfo}>
+              アップロード中... {Math.min(uploadProgress.done + 1, uploadProgress.total)}/{uploadProgress.total}
+            </span>
+          ) : message.text && (
             <span className={message.type === "error" ? styles.msgError : styles.msgSuccess}>
               {message.text}
             </span>

@@ -32,6 +32,23 @@ function collectHeadings(markdown) {
   return headings;
 }
 
+// 本文内の画像を遅延読み込みにする（初期表示と転送量の削減）
+function rehypeImageLazy() {
+  return (tree) => {
+    const walk = (node) => {
+      if (node.type === "element" && node.tagName === "img") {
+        node.properties = {
+          ...node.properties,
+          loading: "lazy",
+          decoding: "async",
+        };
+      }
+      (node.children || []).forEach(walk);
+    };
+    walk(tree);
+  };
+}
+
 // hast（HTML AST）の h1-h3 に、collectHeadings と同じ順序でIDを割り当てる
 function rehypeHeadingIds(ids) {
   return (tree) => {
@@ -58,6 +75,7 @@ export async function markdownToHtml(markdown) {
     .use(remarkBreaks)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(() => rehypeHeadingIds(ids))
+    .use(rehypeImageLazy)
     .use(rehypeHighlight)
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(markdown || "");

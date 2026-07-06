@@ -176,8 +176,23 @@ export default function PostClient({ post, html, toc }) {
   const [tocOpen, setTocOpen] = useState(false);
   const [lightbox, setLightbox] = useState({ open: false, slides: [], index: 0 });
   const { dark, toggle } = useTheme();
+  const progressRef = useRef(null);
 
   const { headerRef, setTocOpenRef, handleTocClick } = useScrollHeader();
+
+  // 読書プログレスバー（stateを使わずDOM直接更新でスクロール負荷を抑える）
+  useEffect(() => {
+    const onScroll = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const p = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
+      if (progressRef.current) {
+        progressRef.current.style.transform = `scaleX(${p})`;
+      }
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleTocToggle = useCallback(() => {
     setTocOpen((v) => {
@@ -273,6 +288,7 @@ export default function PostClient({ post, html, toc }) {
     <div className={styles.page}>
       <PostHeader
         headerRef={headerRef}
+        progressRef={progressRef}
         hasToc={toc.length > 0}
         tocOpen={tocOpen}
         onTocToggle={handleTocToggle}
@@ -337,9 +353,10 @@ export default function PostClient({ post, html, toc }) {
   );
 }
 
-function PostHeader({ headerRef, hasToc, tocOpen, onTocToggle }) {
+function PostHeader({ headerRef, progressRef, hasToc, tocOpen, onTocToggle }) {
   return (
     <header ref={headerRef} className={styles.header}>
+      <div ref={progressRef} className={styles.progressBar} />
       <Link href="/blog" className={styles.headerLogo}>
         <span className={styles.accent}>mikancel</span>.com/blog
       </Link>
