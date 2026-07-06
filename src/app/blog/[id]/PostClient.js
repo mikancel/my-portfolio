@@ -182,7 +182,39 @@ export default function PostClient({ post, html, toc }) {
   // タッチ端末ではLightboxの前後ボタンを消してスワイプ操作に任せる
   const isTouch = useMediaQuery("(hover: none) and (pointer: coarse)");
 
+  const glassRef = useRef(null);
+
   const { headerRef, setTocOpenRef, handleTocClick } = useScrollHeader();
+
+  // iOS Safari 26 (Liquid Glass) 対策:
+  // env(safe-area-inset-bottom) が 0 を返す状態でも、VisualViewport で
+  // 「レイアウトビューポート下端と可視領域下端の差（＝ブラウザバーの被り）」を
+  // 実測し、その分だけプログレスバーを持ち上げてガラス帯を敷く
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const gap = Math.max(
+        0,
+        Math.round(window.innerHeight - (vv.height + vv.offsetTop))
+      );
+      if (glassRef.current) {
+        glassRef.current.style.height = gap > 0 ? `${gap}px` : "";
+      }
+      if (progressRef.current) {
+        progressRef.current.style.bottom = gap > 0 ? `${gap}px` : "";
+      }
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    window.addEventListener("scroll", update, { passive: true });
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      window.removeEventListener("scroll", update);
+    };
+  }, []);
 
   // 目次のスクロールスパイ（いま読んでいる見出しをハイライト）
   useEffect(() => {
@@ -314,7 +346,7 @@ export default function PostClient({ post, html, toc }) {
       {/* 読書プログレスバー（ヘッダから独立した固定表示） */}
       <div ref={progressRef} className={styles.progressBar} />
       {/* バー下の safe-area をガラスで埋める（Liquid Glass対策） */}
-      <div className={styles.progressGlass} />
+      <div ref={glassRef} className={styles.progressGlass} />
 
       <PostHeader
         headerRef={headerRef}
