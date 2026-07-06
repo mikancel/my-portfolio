@@ -229,19 +229,9 @@
   border-top: 1px solid var(--border);
 }
 
-.themeToggle {
+.themeMenuWrap {
   position: absolute;
   right: 32px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 4px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--sub);
-  width: 60px;
-  text-align: center;
-  font-family: inherit;
 }
 
 /* Blog section */

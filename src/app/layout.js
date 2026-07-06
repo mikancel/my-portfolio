@@ -44,9 +44,19 @@ export default function RootLayout({ children }) {
       <body>
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
-            var stored = null;
-            try { stored = localStorage.getItem('theme'); } catch (e) {}
-            var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var mode = null;
+            try {
+              var m = localStorage.getItem('theme');
+              var at = Number(localStorage.getItem('theme-saved-at') || 0);
+              if ((m === 'light' || m === 'dark') && at && (Date.now() - at) <= 604800000) {
+                mode = m;
+                localStorage.setItem('theme-saved-at', String(Date.now()));
+              } else if (m) {
+                localStorage.removeItem('theme');
+                localStorage.removeItem('theme-saved-at');
+              }
+            } catch (e) {}
+            var dark = mode ? mode === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
             document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
           })();
         `}} />

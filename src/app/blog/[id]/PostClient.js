@@ -5,7 +5,7 @@ import styles from "./post.module.css";
 import "highlight.js/styles/github-dark.css";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-import { useTheme } from "@/lib/useTheme";
+import ThemeMenu from "@/components/ThemeMenu";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { getColor, formatDate } from "@/lib/format";
 
@@ -23,8 +23,48 @@ function Thumbnail({ src, title }) {
 }
 
 function TableOfContents({ toc, open, activeId, onClose, onTocClick, title }) {
+  const drawerRef = useRef(null);
+  const touchStart = useRef(null);
+  const touchDx = useRef(0);
+
+  // モバイル: 右スワイプでドロワーを閉じる（指に追従）
+  const handleTouchStart = (e) => {
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY };
+    touchDx.current = 0;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchStart.current) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStart.current.x;
+    const dy = t.clientY - touchStart.current.y;
+    if (Math.abs(dx) < Math.abs(dy)) return; // 縦スクロール優先
+    touchDx.current = dx;
+    if (dx > 0 && drawerRef.current) {
+      drawerRef.current.style.transition = "none";
+      drawerRef.current.style.transform = `translateX(${dx}px)`;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchStart.current = null;
+    if (drawerRef.current) {
+      drawerRef.current.style.transition = "";
+      drawerRef.current.style.transform = "";
+    }
+    if (touchDx.current > 70) onClose();
+    touchDx.current = 0;
+  };
+
   return (
-    <div className={`${styles.tocDrawer} ${open ? styles.tocOpen : ""}`}>
+    <div
+      ref={drawerRef}
+      className={`${styles.tocDrawer} ${open ? styles.tocOpen : ""}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className={styles.tocInner}>
         <p className={styles.tocTitle}>目次</p>
         <ul className={styles.tocList}>
@@ -177,7 +217,6 @@ export default function PostClient({ post, html, toc }) {
   const [tocOpen, setTocOpen] = useState(false);
   const [lightbox, setLightbox] = useState({ open: false, slides: [], index: 0 });
   const [activeHeading, setActiveHeading] = useState(null);
-  const { dark, toggle } = useTheme();
   const progressRef = useRef(null);
   // タッチ端末ではLightboxの前後ボタンを消してスワイプ操作に任せる
   const isTouch = useMediaQuery("(hover: none) and (pointer: coarse)");
@@ -366,9 +405,9 @@ export default function PostClient({ post, html, toc }) {
           <span className={styles.accent}>mikancel</span>.com
         </Link>
         <span className={styles.footerCopy}>© 2026 mikancel.</span>
-        <button className={styles.themeToggle} onClick={toggle}>
-          {dark ? "Light" : "Dark"}
-        </button>
+        <div className={styles.themeMenuWrap}>
+          <ThemeMenu />
+        </div>
       </footer>
 
       <Lightbox
@@ -407,9 +446,14 @@ function PostHeader({ headerRef, hasToc, tocOpen, onTocToggle }) {
           className={`${styles.tocToggle} ${tocOpen ? styles.tocToggleOpen : ""}`}
           onClick={onTocToggle}
           aria-label="目次"
+          aria-expanded={tocOpen}
         >
           目次
-          <span className={styles.tocArrow}>▽</span>
+          <span className={styles.tocIcon} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
         </button>
       )}
     </header>

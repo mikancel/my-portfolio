@@ -90,21 +90,43 @@
   color: var(--accent);
 }
 
-/* 開閉時に回転するのは三角のみ。
-   1em四方のボックス中央にグリフを置き、回転軸を三角の中心に合わせる */
-.tocArrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1em;
-  height: 1em;
-  line-height: 1;
-  transform-origin: center;
-  transition: transform 0.2s ease;
+/* ハンバーガーアイコン（開くと右矢印 → に変形） */
+.tocIcon {
+  position: relative;
+  width: 16px;
+  height: 12px;
+  display: inline-block;
 }
 
-.tocToggleOpen .tocArrow {
-  transform: rotate(180deg);
+.tocIcon span {
+  position: absolute;
+  left: 0;
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transition: all 0.25s ease;
+}
+
+.tocIcon span:nth-child(1) { top: 0; }
+.tocIcon span:nth-child(2) { top: 5px; }
+.tocIcon span:nth-child(3) { top: 10px; }
+
+/* 開いた状態: 中央線を軸（→の柄）に、上下の線を矢じりに */
+.tocToggleOpen .tocIcon span:nth-child(1) {
+  top: 5px;
+  left: 6px;
+  width: 10px;
+  transform: rotate(-45deg);
+  transform-origin: right center;
+}
+
+.tocToggleOpen .tocIcon span:nth-child(3) {
+  top: 5px;
+  left: 6px;
+  width: 10px;
+  transform: rotate(45deg);
+  transform-origin: right center;
 }
 
 /* TOC drawer */
@@ -201,7 +223,7 @@
   color: rgba(255,255,255,0.9);
 }
 
-.articleBody { padding: 32px 24px 80px; }
+.articleBody { padding: 32px 24px 40px; }
 
 .articleMeta {
   display: flex;
@@ -397,7 +419,6 @@
   color: var(--sub);
   padding: 24px 32px;
   border-top: 1px solid var(--border);
-  margin-top: 64px;
   gap: 8px;
   position: relative;
 }
@@ -416,19 +437,9 @@
   text-align: center;
 }
 
-.themeToggle {
+.themeMenuWrap {
   position: absolute;
   right: 32px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 4px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--sub);
-  width: 60px;
-  text-align: center;
-  font-family: inherit;
 }
 
 @media (max-width: 480px) {

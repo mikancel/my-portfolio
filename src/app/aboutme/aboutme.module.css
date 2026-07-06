@@ -392,24 +392,15 @@
   background-color: var(--bg);
 }
 
-.themeToggle {
+.themeMenuWrap {
   position: absolute;
   right: 32px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 4px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--sub);
-  width: 60px;
-  text-align: center;
 }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
   /* Nav はトップページとパディングを揃える（24pxのまま） */
-  .themeToggle { right: 16px; }
+  .themeMenuWrap { right: 16px; }
 
   /* Hero */
   .hero { min-height: calc(100svh - 57px); }

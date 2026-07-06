@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./blog.module.css";
-import { useTheme } from "@/lib/useTheme";
+import ThemeMenu from "@/components/ThemeMenu";
 import { getColor, formatDate } from "@/lib/format";
 
 function Thumbnail({ thumbnail, title }) {
@@ -29,7 +29,6 @@ export default function BlogClient({ posts: initialPosts, tags }) {
   const sentinelRef = useRef(null);
   const fetchSeq = useRef(0); // フィルタ切替と読み込みの競合を防ぐ
 
-  const { dark, toggle } = useTheme();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -175,9 +174,9 @@ export default function BlogClient({ posts: initialPosts, tags }) {
           <span className={styles.accent}>mikancel</span>.com
         </Link>
         <span className={styles.footerCopy}>© 2026 mikancel.</span>
-        <button className={styles.themeToggle} onClick={toggle}>
-          {dark ? "Light" : "Dark"}
-        </button>
+        <div className={styles.themeMenuWrap}>
+          <ThemeMenu />
+        </div>
       </footer>
     </div>
   );

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import styles from "./aboutme.module.css";
-import { useTheme } from "@/lib/useTheme";
+import ThemeMenu from "@/components/ThemeMenu";
 
 const TIMELINE = [
   { hash: "dec2001", message: "init: born" },
@@ -186,7 +186,6 @@ function CmdWindow({ onWhoami, onClosed }) {
 }
 
 export default function AboutMe() {
-  const { dark, toggle } = useTheme();
   const [showName, setShowName] = useState(false);
   const [showRole, setShowRole] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
@@ -317,9 +316,9 @@ export default function AboutMe() {
 
       <footer className={styles.footer}>
         <span>&#169; 2026 mikancel.</span>
-        <button className={styles.themeToggle} onClick={toggle}>
-          {dark ? "Light" : "Dark"}
-        </button>
+        <div className={styles.themeMenuWrap}>
+          <ThemeMenu />
+        </div>
       </footer>
 
     </div>
