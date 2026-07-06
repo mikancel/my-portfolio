@@ -34,13 +34,14 @@
   letter-spacing: -0.3px;
 }
 
-/* 読書プログレスバー（ヘッダ下端） */
+/* 読書プログレスバー（ヘッダから独立して常に画面最上部に固定） */
 .progressBar {
-  position: absolute;
+  position: fixed;
+  top: 0;
   left: 0;
-  bottom: -1px;
   width: 100%;
-  height: 2px;
+  height: 3px;
+  z-index: 300; /* ヘッダ(200)より上 */
   background: var(--accent);
   transform: scaleX(0);
   transform-origin: left;
@@ -50,21 +51,33 @@
 .accent { color: var(--accent); }
 
 .tocToggle {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 4px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px; /* ピルシェイプ */
+  padding: 5px 14px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--sub);
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s;
   font-family: inherit;
 }
 
 .tocToggleOpen {
-  transform: rotate(180deg);
   border-color: var(--accent);
   color: var(--accent);
+}
+
+/* 開閉時に回転するのは三角のみ */
+.tocArrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.tocToggleOpen .tocArrow {
+  transform: rotate(180deg);
 }
 
 /* TOC drawer */
@@ -126,6 +139,13 @@
 }
 
 .tocLink:hover { color: var(--accent); opacity: 1; }
+
+/* いま読んでいる見出しのハイライト */
+.tocLinkActive {
+  color: var(--accent);
+  opacity: 1;
+  font-weight: bold;
+}
 
 /* Article */
 .article {

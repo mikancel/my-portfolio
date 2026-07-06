@@ -408,8 +408,7 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  /* Nav */
-  .nav { padding: 0 16px; }
+  /* Nav はトップページとパディングを揃える（24pxのまま） */
   .themeToggle { right: 16px; }
 
   /* Hero */

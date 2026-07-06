@@ -6,6 +6,7 @@ import "highlight.js/styles/github-dark.css";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import { useTheme } from "@/lib/useTheme";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 import { getColor, formatDate } from "@/lib/format";
 
 const HEADER_HEIGHT = 56;
@@ -21,7 +22,7 @@ function Thumbnail({ src, title }) {
   return <img src={src} alt={title} className={styles.heroImg} />;
 }
 
-function TableOfContents({ toc, open, onClose, onTocClick, title }) {
+function TableOfContents({ toc, open, activeId, onClose, onTocClick, title }) {
   return (
     <div className={`${styles.tocDrawer} ${open ? styles.tocOpen : ""}`}>
       <div className={styles.tocInner}>
@@ -42,7 +43,7 @@ function TableOfContents({ toc, open, onClose, onTocClick, title }) {
               <a
                 href={`#${item.id}`}
                 onClick={(e) => { onTocClick(e, item.id); onClose(); }}
-                className={styles.tocLink}
+                className={`${styles.tocLink} ${activeId === item.id ? styles.tocLinkActive : ""}`}
               >
                 {item.text}
               </a>
@@ -175,10 +176,34 @@ function useScrollHeader() {
 export default function PostClient({ post, html, toc }) {
   const [tocOpen, setTocOpen] = useState(false);
   const [lightbox, setLightbox] = useState({ open: false, slides: [], index: 0 });
+  const [activeHeading, setActiveHeading] = useState(null);
   const { dark, toggle } = useTheme();
   const progressRef = useRef(null);
+  // タッチ端末ではLightboxの前後ボタンを消してスワイプ操作に任せる
+  const isTouch = useMediaQuery("(hover: none) and (pointer: coarse)");
 
   const { headerRef, setTocOpenRef, handleTocClick } = useScrollHeader();
+
+  // 目次のスクロールスパイ（いま読んでいる見出しをハイライト）
+  useEffect(() => {
+    if (!toc.length) return;
+    const onScroll = () => {
+      const offset = HEADER_HEIGHT + 32;
+      let current = null;
+      for (const item of toc) {
+        const el = document.getElementById(item.id);
+        if (el && el.getBoundingClientRect().top <= offset) {
+          current = item.id;
+        } else {
+          break;
+        }
+      }
+      setActiveHeading(current);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [toc]);
 
   // 読書プログレスバー（stateを使わずDOM直接更新でスクロール負荷を抑える）
   useEffect(() => {
@@ -286,9 +311,11 @@ export default function PostClient({ post, html, toc }) {
 
   return (
     <div className={styles.page}>
+      {/* 読書プログレスバー（ヘッダから独立した固定表示） */}
+      <div ref={progressRef} className={styles.progressBar} />
+
       <PostHeader
         headerRef={headerRef}
-        progressRef={progressRef}
         hasToc={toc.length > 0}
         tocOpen={tocOpen}
         onTocToggle={handleTocToggle}
@@ -300,6 +327,7 @@ export default function PostClient({ post, html, toc }) {
       <TableOfContents
         toc={toc}
         open={tocOpen}
+        activeId={activeHeading}
         onClose={handleTocClose}
         onTocClick={handleTocClick}
         title={post.title}
@@ -344,7 +372,18 @@ export default function PostClient({ post, html, toc }) {
         close={() => setLightbox((v) => ({ ...v, open: false }))}
         slides={lightbox.slides}
         index={lightbox.index}
-        controller={{ closeOnBackdropClick: true }}
+        controller={{
+          closeOnBackdropClick: true,
+          // Xのように上下スワイプで閉じる
+          closeOnPullDown: true,
+          closeOnPullUp: true,
+        }}
+        render={
+          // タッチ端末では前後ボタンが画像に被るため非表示（スワイプで移動）
+          isTouch
+            ? { buttonPrev: () => null, buttonNext: () => null }
+            : undefined
+        }
         styles={{
           container: { backgroundColor: "rgba(0, 0, 0, 0.85)" },
         }}
@@ -353,10 +392,9 @@ export default function PostClient({ post, html, toc }) {
   );
 }
 
-function PostHeader({ headerRef, progressRef, hasToc, tocOpen, onTocToggle }) {
+function PostHeader({ headerRef, hasToc, tocOpen, onTocToggle }) {
   return (
     <header ref={headerRef} className={styles.header}>
-      <div ref={progressRef} className={styles.progressBar} />
       <Link href="/blog" className={styles.headerLogo}>
         <span className={styles.accent}>mikancel</span>.com/blog
       </Link>
@@ -366,7 +404,8 @@ function PostHeader({ headerRef, progressRef, hasToc, tocOpen, onTocToggle }) {
           onClick={onTocToggle}
           aria-label="目次"
         >
-          ▽
+          目次
+          <span className={styles.tocArrow}>▽</span>
         </button>
       )}
     </header>
