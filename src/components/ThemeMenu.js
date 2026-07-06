@@ -6,11 +6,11 @@ import styles from "./ThemeMenu.module.css";
 const OPTIONS = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
-  { value: "system", label: "OS追従" },
+  { value: "system", label: "System" },
 ];
 
 export default function ThemeMenu({ className = "" }) {
-  const { theme, setTheme } = useTheme();
+  const { dark, theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
 
@@ -31,8 +31,6 @@ export default function ThemeMenu({ className = "" }) {
     };
   }, [open]);
 
-  const current = OPTIONS.find((o) => o.value === theme) ?? OPTIONS[2];
-
   return (
     <div ref={wrapRef} className={`${styles.wrap} ${className}`}>
       <button
@@ -43,7 +41,8 @@ export default function ThemeMenu({ className = "" }) {
         aria-expanded={open}
         aria-label="テーマ切替"
       >
-        {current.label}
+        {/* ボタンには実際に適用中のテーマを表示（System選択中もLight/Dark表記） */}
+        {dark ? "Dark" : "Light"}
         <span className={styles.caret} aria-hidden="true">▴</span>
       </button>
 
