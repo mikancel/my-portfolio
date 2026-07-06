@@ -12,6 +12,14 @@ const ubuntuMono = Ubuntu_Mono({
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
+// safe-area（ノッチ・ホームインジケータ領域）まで描画を広げる。
+// env(safe-area-inset-*) を効かせるために必要
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export const metadata = {
   metadataBase: new URL("https://mikancel.com"),
   title: "mikancel.com",

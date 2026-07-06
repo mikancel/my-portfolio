@@ -313,6 +313,8 @@ export default function PostClient({ post, html, toc }) {
     <div className={styles.page}>
       {/* 読書プログレスバー（ヘッダから独立した固定表示） */}
       <div ref={progressRef} className={styles.progressBar} />
+      {/* バー下の safe-area をガラスで埋める（Liquid Glass対策） */}
+      <div className={styles.progressGlass} />
 
       <PostHeader
         headerRef={headerRef}
