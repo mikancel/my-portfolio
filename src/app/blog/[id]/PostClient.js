@@ -182,59 +182,7 @@ export default function PostClient({ post, html, toc }) {
   // タッチ端末ではLightboxの前後ボタンを消してスワイプ操作に任せる
   const isTouch = useMediaQuery("(hover: none) and (pointer: coarse)");
 
-  const glassRef = useRef(null);
-  const scrollGlassRef = useRef(null);
-
   const { headerRef, setTocOpenRef, handleTocClick } = useScrollHeader();
-
-  // 案B: Safariのバー裏ゾーンには「スクロールレイヤーの続き」が描画されるため、
-  // ブラー帯を fixed ではなく本文と同じレイヤー(absolute)に置き、
-  // 常に「レイアウトビューポート下端」の文書座標へ JS で追従させる
-  useEffect(() => {
-    if (!isTouch) return;
-    const el = scrollGlassRef.current;
-    if (!el) return;
-    const update = () => {
-      el.style.transform = `translateY(${window.scrollY + window.innerHeight}px)`;
-    };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [isTouch]);
-
-  // iOS Safari 26 (Liquid Glass) 対策:
-  // env(safe-area-inset-bottom) が 0 を返す状態でも、VisualViewport で
-  // 「レイアウトビューポート下端と可視領域下端の差（＝ブラウザバーの被り）」を
-  // 実測し、その分だけプログレスバーを持ち上げてガラス帯を敷く
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () => {
-      const gap = Math.max(
-        0,
-        Math.round(window.innerHeight - (vv.height + vv.offsetTop))
-      );
-      if (glassRef.current) {
-        glassRef.current.style.height = gap > 0 ? `${gap}px` : "";
-      }
-      if (progressRef.current) {
-        progressRef.current.style.bottom = gap > 0 ? `${gap}px` : "";
-      }
-    };
-    update();
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    window.addEventListener("scroll", update, { passive: true });
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-      window.removeEventListener("scroll", update);
-    };
-  }, []);
 
   // 目次のスクロールスパイ（いま読んでいる見出しをハイライト）
   useEffect(() => {
@@ -363,14 +311,11 @@ export default function PostClient({ post, html, toc }) {
 
   return (
     <div className={styles.page}>
-      {/* 読書プログレスバー（ヘッダから独立した固定表示） */}
-      <div ref={progressRef} className={styles.progressBar} />
-      {/* バー下の safe-area をガラスで埋める（Liquid Glass対策） */}
-      <div ref={glassRef} className={styles.progressGlass} />
-      {/* スクロールレイヤー内ブラー帯（Safariバー裏のゾーン用）。
-          クリップコンテナで包み、帯が文書の高さを伸ばさないようにする */}
-      <div className={styles.scrollGlassClip} aria-hidden="true">
-        <div ref={scrollGlassRef} className={styles.scrollGlass} />
+      {/* 読書プログレスバー＋直下のガラス帯を1つの fixed ユニットに。
+          位置調整のJSは使わない（fixedはWebKitがコンポジタで追従するためラグゼロ） */}
+      <div className={styles.progressDock} aria-hidden="true">
+        <div ref={progressRef} className={styles.progressBar} />
+        <div className={styles.progressDockGlass} />
       </div>
 
       <PostHeader
