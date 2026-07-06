@@ -1,7 +1,37 @@
 .page {
+  position: relative; /* scrollGlassClip の基準 */
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
+}
+
+/* スクロールレイヤー内ブラー帯のクリップコンテナ。
+   帯がページ末尾を越えて文書の高さを伸ばし続けるのを防ぐ */
+.scrollGlassClip {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+  z-index: 150;
+}
+
+/* JSで translateY(scrollY + innerHeight) に追従し、
+   常に画面下端〜その下(ブラウザバー裏)を覆う */
+.scrollGlass {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 140px;
+  background: var(--glass-bg);
+  transform: translateY(-200px); /* 初期位置は画面外 */
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .scrollGlass {
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    backdrop-filter: blur(12px) saturate(1.5);
+  }
 }
 
 /* Header（ガラス） */

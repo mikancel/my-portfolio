@@ -183,8 +183,28 @@ export default function PostClient({ post, html, toc }) {
   const isTouch = useMediaQuery("(hover: none) and (pointer: coarse)");
 
   const glassRef = useRef(null);
+  const scrollGlassRef = useRef(null);
 
   const { headerRef, setTocOpenRef, handleTocClick } = useScrollHeader();
+
+  // 案B: Safariのバー裏ゾーンには「スクロールレイヤーの続き」が描画されるため、
+  // ブラー帯を fixed ではなく本文と同じレイヤー(absolute)に置き、
+  // 常に「レイアウトビューポート下端」の文書座標へ JS で追従させる
+  useEffect(() => {
+    if (!isTouch) return;
+    const el = scrollGlassRef.current;
+    if (!el) return;
+    const update = () => {
+      el.style.transform = `translateY(${window.scrollY + window.innerHeight}px)`;
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [isTouch]);
 
   // iOS Safari 26 (Liquid Glass) 対策:
   // env(safe-area-inset-bottom) が 0 を返す状態でも、VisualViewport で
@@ -347,6 +367,11 @@ export default function PostClient({ post, html, toc }) {
       <div ref={progressRef} className={styles.progressBar} />
       {/* バー下の safe-area をガラスで埋める（Liquid Glass対策） */}
       <div ref={glassRef} className={styles.progressGlass} />
+      {/* スクロールレイヤー内ブラー帯（Safariバー裏のゾーン用）。
+          クリップコンテナで包み、帯が文書の高さを伸ばさないようにする */}
+      <div className={styles.scrollGlassClip} aria-hidden="true">
+        <div ref={scrollGlassRef} className={styles.scrollGlass} />
+      </div>
 
       <PostHeader
         headerRef={headerRef}
