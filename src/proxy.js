@@ -14,13 +14,15 @@ const SESSION_OPTIONS = {
 export async function proxy(req) {
   const { pathname, hostname } = req.nextUrl;
 
-  // /adminへの直接アクセスをブロック（本番環境のみ）
+  // /adminへの直接アクセスをブロック（本番環境のみ）。
+  // 空ボディの404だとブラウザが真っ白になるため、存在しないパスへrewriteして
+  // サイトのnot-foundページ（404ステータス）を描画させる。
   if (
     process.env.NODE_ENV === "production" &&
     pathname.startsWith("/admin") &&
     hostname !== "admin.mikancel.com"
   ) {
-    return new NextResponse(null, { status: 404 });
+    return NextResponse.rewrite(new URL("/_not-found", req.url));
   }
 
   const isAdminDomain =
