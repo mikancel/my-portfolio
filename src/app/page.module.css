@@ -70,6 +70,9 @@
   color: var(--accent);
   letter-spacing: 0.15em;
   margin-bottom: 20px;
+  /* フォント読み込み中のスワップで幅が変わっても折り返さない
+     （一瞬2行になり下のコンテンツ全体が上下にジャンプするのを防ぐ） */
+  white-space: nowrap;
 }
 
 .hero h1 {

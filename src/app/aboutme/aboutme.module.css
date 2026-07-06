@@ -216,6 +216,8 @@
   opacity: 0;
   transform: translateY(12px);
   transition: opacity 0.6s ease, transform 0.6s ease;
+  /* フォントスワップ時に項目内で改行されてレイアウトが跳ねるのを防ぐ */
+  white-space: nowrap;
 }
 
 .heroMetaIn {
