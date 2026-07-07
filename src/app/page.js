@@ -54,9 +54,10 @@ export default async function Home() {
         <h1>Welcome to <span className={styles.accent}>mikancel</span>.com</h1>
         <div className={styles.heroActions}>
           <Link href="/aboutme" className={styles.heroBtnPrimary}>About me →</Link>
-          {/* 折り返す時は Blog / GitHub がまとまって下段へ行く */}
+          {/* 折り返す時は Blog / Now / GitHub がまとまって下段へ行く */}
           <div className={styles.heroActionsGroup}>
             <Link href="/blog" className={styles.heroBtn}>Blog</Link>
+            <Link href="/now" className={styles.heroBtn}>Now</Link>
             <a
               href="https://github.com/mikancel"
               target="_blank"
@@ -123,6 +124,7 @@ export default async function Home() {
       </section>
 
       <footer className={styles.footer}>
+        <Link href="/map" className={styles.footerMap}>sitemap</Link>
         <span>© 2026 mikancel.</span>
         <HomeClient />
       </footer>

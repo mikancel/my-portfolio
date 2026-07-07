@@ -1,0 +1,68 @@
+.cmd {
+  font-family: var(--font-ubuntu-mono), monospace;
+  font-size: 14px;
+  color: var(--sub);
+  margin-bottom: 24px;
+}
+
+.tree {
+  font-family: var(--font-ubuntu-mono), monospace;
+  font-size: 15px;
+  line-height: 2;
+}
+
+.root {
+  color: var(--accent);
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.branch {
+  color: var(--sub);
+  opacity: 0.6;
+  white-space: pre;
+  flex-shrink: 0;
+}
+
+.path {
+  color: var(--accent);
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: text-decoration 0.15s;
+}
+
+.path:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pathDim {
+  color: var(--sub);
+  flex-shrink: 0;
+}
+
+.label {
+  color: var(--text);
+  opacity: 0.7;
+  margin-left: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary {
+  margin-top: 28px;
+  font-family: var(--font-ubuntu-mono), monospace;
+  font-size: 13px;
+  color: var(--sub);
+}
+
+@media (max-width: 600px) {
+  .tree { font-size: 13px; }
+  .label { font-size: 12px; margin-left: 10px; }
+}

@@ -234,6 +234,24 @@
   right: 32px;
 }
 
+.footerMap {
+  position: absolute;
+  left: 32px;
+  font-size: 14px;
+  color: var(--sub);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footerMap:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .footerMap { left: 16px; }
+  .themeMenuWrap { right: 16px; }
+}
+
 /* Blog section */
 .blogSection {
   padding: 96px 32px;
