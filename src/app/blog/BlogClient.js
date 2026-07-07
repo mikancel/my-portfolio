@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import styles from "./blog.module.css";
 import ThemeMenu from "@/components/ThemeMenu";
@@ -18,72 +18,36 @@ function Thumbnail({ thumbnail, title }) {
   );
 }
 
-const LIMIT = 20;
+const PAGE = 20;
 
-export default function BlogClient({ posts: initialPosts, tags }) {
-  const [posts, setPosts] = useState(initialPosts);
+export default function BlogClient({ posts, tags }) {
   const [activeTags, setActiveTags] = useState([]);
-  const [offset, setOffset] = useState(initialPosts.length);
-  const [hasMore, setHasMore] = useState(initialPosts.length === LIMIT);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [visible, setVisible] = useState(PAGE);
   const sentinelRef = useRef(null);
-  const fetchSeq = useRef(0); // フィルタ切替と読み込みの競合を防ぐ
-
   const searchParams = useSearchParams();
-  const router = useRouter();
-
-  // サーバーからフィルタ済みの記事を取得する
-  const fetchPosts = useCallback(async (tagIds, currentOffset, replace) => {
-    const seq = ++fetchSeq.current;
-    setLoadingMore(true);
-    try {
-      const params = new URLSearchParams({
-        limit: String(LIMIT),
-        offset: String(currentOffset),
-      });
-      if (tagIds.length) params.set("tags", tagIds.join(","));
-      const res = await fetch(`/api/blog?${params}`);
-      const data = await res.json();
-      if (seq !== fetchSeq.current) return;
-      const newPosts = data.posts || [];
-      setPosts((prev) => (replace ? newPosts : [...prev, ...newPosts]));
-      setOffset(currentOffset + newPosts.length);
-      setHasMore(newPosts.length === LIMIT);
-    } catch {
-      if (seq === fetchSeq.current) setHasMore(false);
-    } finally {
-      if (seq === fetchSeq.current) setLoadingMore(false);
-    }
-  }, []);
 
   // URLの ?tag= を初期フィルタとして反映
   useEffect(() => {
     const ids = searchParams.getAll("tag").map(Number).filter(Boolean);
-    if (ids.length > 0) {
-      setActiveTags(ids);
-      setPosts([]);
-      fetchPosts(ids, 0, true);
-    }
+    if (ids.length > 0) setActiveTags(ids);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 選択タグを全て持つ記事だけに絞る（クライアント側・メモリ内。DBアクセスなし＝瞬時）
+  const filtered = useMemo(() => {
+    if (activeTags.length === 0) return posts;
+    return posts.filter((p) =>
+      activeTags.every((id) => p.tags?.some((t) => Number(t.id) === id))
+    );
+  }, [posts, activeTags]);
+
   const applyTags = (next) => {
     setActiveTags(next);
+    setVisible(PAGE);
+    // URLだけ差し替える（history.replaceStateならRSCフェッチも発生せずネットワーク完全ゼロ）
     const params = new URLSearchParams();
     next.forEach((t) => params.append("tag", t));
-    router.replace(`/blog${next.length > 0 ? `?${params}` : ""}`, { scroll: false });
-
-    if (next.length === 0) {
-      // フィルタ解除はサーバーレンダリング済みの初期一覧に戻す
-      fetchSeq.current++;
-      setPosts(initialPosts);
-      setOffset(initialPosts.length);
-      setHasMore(initialPosts.length === LIMIT);
-      setLoadingMore(false);
-    } else {
-      setPosts([]);
-      fetchPosts(next, 0, true);
-    }
+    window.history.replaceState(null, "", `/blog${next.length > 0 ? `?${params}` : ""}`);
   };
 
   const toggleTag = (id) => {
@@ -95,22 +59,21 @@ export default function BlogClient({ posts: initialPosts, tags }) {
     );
   };
 
-  const loadMore = useCallback(() => {
-    if (loadingMore || !hasMore) return;
-    fetchPosts(activeTags, offset, false);
-  }, [loadingMore, hasMore, offset, activeTags, fetchPosts]);
-
+  // スクロールで表示件数を増やす（既にメモリ上にあるのでネットワーク不要）
   useEffect(() => {
+    if (visible >= filtered.length) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) loadMore();
+        if (entries[0].isIntersecting) setVisible((v) => v + PAGE);
       },
       { rootMargin: "200px" }
     );
     const el = sentinelRef.current;
     if (el) observer.observe(el);
     return () => { if (el) observer.unobserve(el); };
-  }, [loadMore]);
+  }, [filtered.length, visible]);
+
+  const shown = filtered.slice(0, visible);
 
   return (
     <div className={styles.page}>
@@ -136,12 +99,10 @@ export default function BlogClient({ posts: initialPosts, tags }) {
         </div>
 
         <div className={styles.postList}>
-          {posts.length === 0 ? (
-            <p className={styles.empty}>
-              {loadingMore ? "読み込み中..." : "記事がまだありません"}
-            </p>
+          {filtered.length === 0 ? (
+            <p className={styles.empty}>記事がまだありません</p>
           ) : (
-            posts.map((post) => (
+            shown.map((post) => (
               <Link key={post.id} href={`/blog/${post.id}`} className={styles.postCard}>
                 <Thumbnail thumbnail={post.thumbnail} title={post.title} />
                 <div className={styles.postMeta}>
@@ -162,11 +123,7 @@ export default function BlogClient({ posts: initialPosts, tags }) {
           )}
         </div>
 
-        <div ref={sentinelRef} className={styles.sentinel}>
-          {loadingMore && posts.length > 0 && (
-            <div className={styles.loadingMore}>読み込み中...</div>
-          )}
-        </div>
+        <div ref={sentinelRef} className={styles.sentinel} />
       </main>
 
       <footer className={styles.footer}>

@@ -68,6 +68,21 @@ export async function getAllPosts(
   return attachTags(result.rows);
 }
 
+// 公開記事の一覧メタデータ（本文contentを含まない軽量版）を全件返す。
+// /blog ページはこれをキャッシュ済みHTMLに埋め込み、タグ絞り込みは
+// クライアント側で行うため、タグクリックごとのDBアクセスが発生しない。
+export async function getPublishedPostsMeta() {
+  const db = getDb();
+  const result = await db.execute(
+    `SELECT p.id, p.title, p.thumbnail, p.published,
+            p.published_at, p.created_at, p.updated_at
+     FROM posts p
+     WHERE p.published = 1
+     ORDER BY COALESCE(p.published_at, p.created_at) DESC`
+  );
+  return attachTags(result.rows);
+}
+
 export async function getPostById(id, publishedOnly = true) {
   const db = getDb();
   const result = await db.execute({
