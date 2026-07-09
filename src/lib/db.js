@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@libsql/client";
 import { deleteFolderFromR2, deleteFromR2 } from "@/lib/r2";
 
@@ -83,7 +84,9 @@ export async function getPublishedPostsMeta() {
   return attachTags(result.rows);
 }
 
-export async function getPostById(id, publishedOnly = true) {
+// React cache() でメモ化。同一リクエスト内（generateMetadata とページ本体）で
+// 同じ getPostById(id) を呼んでもDBクエリは1回に統合される。
+export const getPostById = cache(async (id, publishedOnly = true) => {
   const db = getDb();
   const result = await db.execute({
     sql: `SELECT p.* FROM posts p
@@ -93,6 +96,13 @@ export async function getPostById(id, publishedOnly = true) {
   if (!result.rows.length) return null;
   const [post] = await attachTags(result.rows);
   return post;
+});
+
+// 公開記事のIDを列挙（generateStaticParams 用）
+export async function getPublishedPostIds() {
+  const db = getDb();
+  const result = await db.execute("SELECT id FROM posts WHERE published = 1");
+  return result.rows.map((r) => r.id);
 }
 
 export async function getLatestPostId() {

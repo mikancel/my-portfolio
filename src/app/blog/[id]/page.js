@@ -1,9 +1,17 @@
-import { getPostById } from "@/lib/db";
+import { getPostById, getPublishedPostIds } from "@/lib/db";
 import { markdownToHtml, extractToc, extractExcerpt } from "@/lib/markdown";
 import PostClient from "./PostClient";
 import { notFound } from "next/navigation";
 
 export const revalidate = false;
+
+// 公開記事をビルド時に静的生成（CDN配信＝クリックがほぼ瞬時に）。
+// publish/更新時は revalidatePath("/blog/:id") で再生成される。
+// ここに無い新規記事も dynamicParams(デフォルトtrue) で初回オンデマンド生成→以後キャッシュ。
+export async function generateStaticParams() {
+  const ids = await getPublishedPostIds();
+  return ids.map((id) => ({ id: String(id) }));
+}
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
