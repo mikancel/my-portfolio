@@ -39,6 +39,18 @@ export async function deleteFromR2(key) {
   }));
 }
 
+// 複数キーをまとめて削除（DeleteObjectsは最大1000件/回）
+export async function deleteManyFromR2(keys) {
+  if (!keys.length) return;
+  for (let i = 0; i < keys.length; i += 1000) {
+    const chunk = keys.slice(i, i + 1000);
+    await r2.send(new DeleteObjectsCommand({
+      Bucket: BUCKET,
+      Delete: { Objects: chunk.map((Key) => ({ Key })) },
+    }));
+  }
+}
+
 export async function deleteFolderFromR2(prefix) {
   // ListObjectsV2は最大1000件/回のためページングする
   let continuationToken;

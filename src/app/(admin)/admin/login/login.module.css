@@ -54,7 +54,9 @@
   min-height: 52px;
 }
 
-.btn:hover:not(:disabled) { opacity: 0.85; }
+@media (hover: hover) {
+  .btn:hover:not(:disabled) { opacity: 0.85; }
+}
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @keyframes spin {

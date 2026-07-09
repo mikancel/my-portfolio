@@ -129,8 +129,10 @@
   justify-content: center;
 }
 
-.cmdBtn:hover { background: rgba(255,255,255,0.08); }
-.cmdClose:hover { background: #c42b1c; color: #fff; }
+@media (hover: hover) {
+  .cmdBtn:hover { background: rgba(255,255,255,0.08); }
+  .cmdClose:hover { background: #c42b1c; color: #fff; }
+}
 
 /* 本体 */
 .cmdBody {

@@ -56,7 +56,9 @@
   transition: all 0.15s;
 }
 
-.thumbnailBtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+@media (hover: hover) {
+  .thumbnailBtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+}
 .thumbnailBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .thumbnailRemoveBtn {
@@ -72,7 +74,9 @@
   transition: all 0.15s;
 }
 
-.thumbnailRemoveBtn:hover { border-color: #e53e3e; }
+@media (hover: hover) {
+  .thumbnailRemoveBtn:hover { border-color: #e53e3e; }
+}
 
 .metaInput {
   flex: 1;
@@ -109,7 +113,9 @@
   transition: all 0.15s;
 }
 
-.tab:hover { color: var(--text); }
+@media (hover: hover) {
+  .tab:hover { color: var(--text); }
+}
 
 .tabActive {
   color: var(--accent) !important;
@@ -139,10 +145,12 @@
   text-align: center;
 }
 
-.toolBtn:hover {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+@media (hover: hover) {
+  .toolBtn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
 }
 
 .textarea {
@@ -269,7 +277,9 @@
   transition: all 0.15s;
 }
 
-.draftBtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+@media (hover: hover) {
+  .draftBtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+}
 .draftBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .publishBtn {
@@ -285,7 +295,9 @@
   transition: opacity 0.15s;
 }
 
-.publishBtn:hover:not(:disabled) { opacity: 0.85; }
+@media (hover: hover) {
+  .publishBtn:hover:not(:disabled) { opacity: 0.85; }
+}
 .publishBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .previewContent h1 a,
@@ -341,7 +353,9 @@
   align-items: center;
 }
 
-.tagBadgeRemove:hover { color: #fff; }
+@media (hover: hover) {
+  .tagBadgeRemove:hover { color: #fff; }
+}
 
 .tagExisting {
   display: flex;
@@ -362,9 +376,11 @@
   white-space: nowrap;
 }
 
-.tagExistingBtn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+@media (hover: hover) {
+  .tagExistingBtn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
 }
 
 .tagExistingBtnActive {
@@ -373,9 +389,11 @@
   color: #fff;
 }
 
-.tagExistingBtnActive:hover {
-  opacity: 0.8;
-  color: #fff;
+@media (hover: hover) {
+  .tagExistingBtnActive:hover {
+    opacity: 0.8;
+    color: #fff;
+  }
 }
 
 .tagNewRow {
@@ -412,9 +430,11 @@
   transition: all 0.15s;
 }
 
-.tagNewBtn:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
+@media (hover: hover) {
+  .tagNewBtn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
 }
 
 .tagNewBtn:disabled { opacity: 0.4; cursor: not-allowed; }

@@ -111,10 +111,12 @@
   color: var(--text);
 }
 
-.heroBtn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+@media (hover: hover) {
+  .heroBtn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
 }
 
 .heroBtnPrimary {
@@ -123,8 +125,10 @@
   color: #fff;
 }
 
-.heroBtnPrimary:hover {
-  box-shadow: 0 0 0 4px var(--accent-glow);
+@media (hover: hover) {
+  .heroBtnPrimary:hover {
+    box-shadow: 0 0 0 4px var(--accent-glow);
+  }
 }
 
 .heroBtn:active,
@@ -206,9 +210,11 @@
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.contactLink:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+@media (hover: hover) {
+  .contactLink:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
 }
 
 .contactLink:active { transform: scale(0.99); }
@@ -276,9 +282,11 @@
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.blogCard:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+@media (hover: hover) {
+  .blogCard:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
 }
 
 .blogCard:active { transform: scale(0.99); }

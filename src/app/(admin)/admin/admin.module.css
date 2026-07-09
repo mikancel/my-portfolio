@@ -51,7 +51,9 @@
   transition: all 0.15s;
 }
 
-.logoutBtn:hover { border-color: #e53e3e; color: #e53e3e; }
+@media (hover: hover) {
+  .logoutBtn:hover { border-color: #e53e3e; color: #e53e3e; }
+}
 
 .main {
   max-width: 960px;
@@ -86,9 +88,11 @@
   text-align: center;
 }
 
-.menuCard:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+@media (hover: hover) {
+  .menuCard:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
 }
 
 .menuIcon { font-size: 32px; }

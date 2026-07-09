@@ -187,7 +187,9 @@
   transition: color 0.15s, opacity 0.15s;
 }
 
-.tocLink:hover { color: var(--accent); opacity: 1; }
+@media (hover: hover) {
+  .tocLink:hover { color: var(--accent); opacity: 1; }
+}
 
 /* いま読んでいる見出しのハイライト */
 .tocLinkActive {
@@ -205,15 +207,16 @@
 
 .heroImg {
   width: 100%;
-  max-height: 360px;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
+  display: block;
   /* 透過画像用のニュートラル背景 */
   background: var(--card-bg);
 }
 
 .heroPlaceholder {
   width: 100%;
-  height: 240px;
+  aspect-ratio: 1 / 1;
   background: var(--accent);
   display: flex;
   align-items: center;
@@ -244,7 +247,9 @@
   white-space: nowrap; /* タグ名の途中改行を防ぐ */
 }
 
-.tag:hover { background: var(--accent); color: #fff; }
+@media (hover: hover) {
+  .tag:hover { background: var(--accent); color: #fff; }
+}
 
 .date { font-size: 13px; color: var(--sub); margin-left: auto; }
 

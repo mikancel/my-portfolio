@@ -53,7 +53,9 @@
   transition: opacity 0.15s;
 }
 
-.newBtn:hover { opacity: 0.85; }
+@media (hover: hover) {
+  .newBtn:hover { opacity: 0.85; }
+}
 
 .main {
   max-width: 960px;
@@ -93,7 +95,9 @@
   transition: background 0.15s;
 }
 
-.postRow:hover { background: var(--border); }
+@media (hover: hover) {
+  .postRow:hover { background: var(--border); }
+}
 
 .postInfo {
   display: flex;
@@ -165,9 +169,13 @@
   align-items: center;
 }
 
-.actionBtn:hover { border-color: var(--accent); color: var(--accent); }
+@media (hover: hover) {
+  .actionBtn:hover { border-color: var(--accent); color: var(--accent); }
+}
 
-.deleteBtn:hover { border-color: #e53e3e !important; color: #e53e3e !important; }
+@media (hover: hover) {
+  .deleteBtn:hover { border-color: #e53e3e !important; color: #e53e3e !important; }
+}
 
 /* ── スマホ対応 ── */
 @media (max-width: 768px) {

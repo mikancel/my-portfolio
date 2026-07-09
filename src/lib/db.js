@@ -1,6 +1,10 @@
 import { cache } from "react";
 import { createClient } from "@libsql/client";
-import { deleteFolderFromR2, deleteFromR2 } from "@/lib/r2";
+import { deleteManyFromR2 } from "@/lib/r2";
+
+const R2_BASE = "https://pic.mikancel.com/";
+const isR2Url = (u) => typeof u === "string" && u.startsWith(R2_BASE);
+const r2UrlToKey = (u) => u.replace(R2_BASE, "");
 
 let _db = null;
 
@@ -159,15 +163,16 @@ export async function updatePost(id, { title, content, thumbnail, published, tag
     `DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM post_tags)`
   );
 
-  // 本文から消えた画像をR2から削除（DB更新成功後に実行）
-  if (content !== undefined) {
-    const oldUrls = extractR2Urls(current.content);
-    const newUrls = extractR2Urls(content);
-    const deleted = oldUrls.filter((url) => !newUrls.includes(url));
-    await Promise.all(
-      deleted.map((url) => deleteFromR2(url.replace("https://pic.mikancel.com/", "")))
-    );
-  }
+  // 使われなくなった画像（本文から消えた画像＋差し替えられた古いサムネ）を
+  // R2から削除（DB更新成功後に実行）。ディレクトリ構造には依存しない
+  const finalContent = content !== undefined ? content : current.content;
+  const finalThumb = thumbnail !== undefined ? thumbnail : current.thumbnail;
+  const oldUrls = new Set(extractR2Urls(current.content));
+  if (isR2Url(current.thumbnail)) oldUrls.add(current.thumbnail);
+  const newUrls = new Set(extractR2Urls(finalContent));
+  if (isR2Url(finalThumb)) newUrls.add(finalThumb);
+  const removed = [...oldUrls].filter((u) => !newUrls.has(u));
+  if (removed.length) await deleteManyFromR2(removed.map(r2UrlToKey));
 
   return getPostById(id, false);
 }
@@ -175,12 +180,18 @@ export async function updatePost(id, { title, content, thumbnail, published, tag
 export async function deletePost(id) {
   const db = getDb();
   const result = await db.execute({
-    sql: "SELECT id FROM posts WHERE id = ?",
+    sql: "SELECT content, thumbnail FROM posts WHERE id = ?",
     args: [id],
   });
   if (result.rows.length === 0) throw new Error("Post not found");
+  const row = result.rows[0];
 
-  await deleteFolderFromR2(`blog/${id}/`);
+  // 記事の本文＋サムネが参照するR2画像を全て削除（ディレクトリ構造に依存しない）
+  const urls = new Set(extractR2Urls(row.content));
+  if (isR2Url(row.thumbnail)) urls.add(row.thumbnail);
+  const keys = [...urls].map(r2UrlToKey);
+  if (keys.length) await deleteManyFromR2(keys);
+
   await db.batch(
     [
       { sql: "DELETE FROM posts WHERE id = ?", args: [id] },
