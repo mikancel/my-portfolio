@@ -21,8 +21,8 @@ export async function generateMetadata({ params }: PageProps) {
   if (!post) return {};
 
   const description = extractExcerpt(post.content, 120) || "mikancel のブログ記事";
-  // サムネイルが無い記事はタイトル入りのOG画像を動的生成する
-  const image = post.thumbnail || `/api/og/${post.id}`;
+  // シェア時のカードはサムネイルの有無に関わらずタイトル入りのOG画像で統一する
+  const image = `/api/og/${post.id}`;
 
   return {
     title: post.title,
