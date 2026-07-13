@@ -1,8 +1,26 @@
 import { ImageResponse } from "next/og";
+import sharp from "sharp";
 import { getPostById } from "@/lib/db";
 import { lineSeedFontsOption } from "@/lib/ogFont";
 
 export const revalidate = 3600;
+
+// サムネイルはWebPで保存しているが、satori(next/og)はWebPを描画できないため
+// PNGに変換してdata URIで埋め込む。失敗時はnull（タイトル1文字目にフォールバック）。
+async function thumbnailDataUri(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    const png = await sharp(buf)
+      .resize(112, 112, { fit: "cover" })
+      .png()
+      .toBuffer();
+    return `data:image/png;base64,${png.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(req, { params }) {
   const { id } = await params;
@@ -14,7 +32,10 @@ export async function GET(req, { params }) {
   const brand = "mikancel.com/blog";
 
   // フォント取得に失敗しても画像自体は返す（欧文はデフォルトフォントで描画される）
-  const fontsOption = await lineSeedFontsOption(title + brand);
+  const [fontsOption, thumb] = await Promise.all([
+    lineSeedFontsOption(title + brand),
+    post.thumbnail ? thumbnailDataUri(post.thumbnail) : Promise.resolve(null),
+  ]);
 
   return new ImageResponse(
     (
@@ -64,22 +85,35 @@ export async function GET(req, { params }) {
             <span style={{ color: "#f68827" }}>mikancel</span>
             <span style={{ color: "#ffffff" }}>.com/blog</span>
           </div>
-          <div
-            style={{
-              display: "flex",
-              width: 56,
-              height: 56,
-              borderRadius: 12,
-              background: "#f68827",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 32,
-              fontWeight: 700,
-              color: "#ffffff",
-            }}
-          >
-            {post.title.charAt(0)}
-          </div>
+          {thumb ? (
+            <img
+              src={thumb}
+              width={56}
+              height={56}
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 6,
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                width: 56,
+                height: 56,
+                borderRadius: 6,
+                background: "#f68827",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 32,
+                fontWeight: 700,
+                color: "#ffffff",
+              }}
+            >
+              {post.title.charAt(0)}
+            </div>
+          )}
         </div>
       </div>
     ),
