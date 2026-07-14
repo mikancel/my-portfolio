@@ -9,7 +9,7 @@ export const revalidate = 3600;
 // PNGに変換してdata URIで埋め込む。失敗時はnull（タイトル1文字目にフォールバック）。
 async function thumbnailDataUri(url) {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
     if (!res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
     const png = await sharp(buf)

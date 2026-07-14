@@ -1,6 +1,7 @@
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import { getAndDeleteChallenge, saveCredential } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { serverError } from "@/lib/apiError";
 import crypto from "crypto";
 
 const RP_ID = process.env.WEBAUTHN_RP_ID || "admin.mikancel.com";
@@ -42,8 +43,6 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true });
   } catch (e) {
-    console.error("register/verify error:", e);
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    return serverError("POST /api/auth/register/verify", e);
   }
 }

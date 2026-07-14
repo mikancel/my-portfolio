@@ -1,6 +1,7 @@
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { getCredentials, getAndDeleteChallenge, updateCredentialCounter } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { serverError } from "@/lib/apiError";
 
 const RP_ID = process.env.WEBAUTHN_RP_ID || "admin.mikancel.com";
 const ORIGIN = process.env.WEBAUTHN_ORIGIN || "https://admin.mikancel.com";
@@ -45,7 +46,6 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    return serverError("POST /api/auth/authenticate/verify", e);
   }
 }

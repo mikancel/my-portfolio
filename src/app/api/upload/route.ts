@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import crypto from "crypto";
 import { requireAuth } from "@/lib/session";
+import { serverError } from "@/lib/apiError";
 import { getPresignedUploadUrl } from "@/lib/r2";
 
 export async function POST(req: Request) {
@@ -33,7 +34,6 @@ export async function POST(req: Request) {
     const { url, publicUrl } = await getPresignedUploadUrl(key, contentType);
     return Response.json({ url, publicUrl });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    return serverError("POST /api/upload", e);
   }
 }

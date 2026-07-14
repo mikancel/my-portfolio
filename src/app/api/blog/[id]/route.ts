@@ -1,11 +1,19 @@
 import { getPostById, updatePost, deletePost, upsertTag } from "@/lib/db";
 import { requireAuth } from "@/lib/session";
+import { serverError } from "@/lib/apiError";
 import { revalidatePath } from "next/cache";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-const errorMessage = (e: unknown) =>
-  e instanceof Error ? e.message : "Unknown error";
+// 記事に依存する経路をまとめて再生成する。
+// /api/og/[id] はルートハンドラだが Full Route Cache 対象なので、
+// ここで purge しないとタイトル・サムネ変更後も最大1時間古い画像が配信される。
+function revalidatePost(id: string) {
+  revalidatePath("/blog");
+  revalidatePath(`/blog/${id}`);
+  revalidatePath(`/api/og/${id}`);
+  revalidatePath("/");
+}
 
 export async function GET(req: Request, { params }: RouteContext) {
   const { id } = await params;
@@ -20,7 +28,7 @@ export async function GET(req: Request, { params }: RouteContext) {
     if (!post) return Response.json({ error: "Not found" }, { status: 404 });
     return Response.json(post);
   } catch (e) {
-    return Response.json({ error: errorMessage(e) }, { status: 500 });
+    return serverError("GET /api/blog/[id]", e);
   }
 }
 
@@ -48,12 +56,10 @@ export async function PATCH(req: Request, { params }: RouteContext) {
           )
         : undefined;
     const post = await updatePost(Number(id), { ...rest, tagIds });
-    revalidatePath("/blog");
-    revalidatePath(`/blog/${id}`);
-    revalidatePath("/");
+    revalidatePost(id);
     return Response.json(post);
   } catch (e) {
-    return Response.json({ error: errorMessage(e) }, { status: 500 });
+    return serverError("PATCH /api/blog/[id]", e);
   }
 }
 
@@ -64,11 +70,9 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
   const { id } = await params;
   try {
     await deletePost(Number(id));
-    revalidatePath("/blog");
-    revalidatePath(`/blog/${id}`);
-    revalidatePath("/");
+    revalidatePost(id);
     return Response.json({ ok: true });
   } catch (e) {
-    return Response.json({ error: errorMessage(e) }, { status: 500 });
+    return serverError("DELETE /api/blog/[id]", e);
   }
 }

@@ -4,6 +4,8 @@ import styles from "./editor.module.css";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import type { Post, Tag } from "@/lib/types";
 
+const LEAVE_MESSAGE = "未保存の変更があります。ページを離れますか？";
+
 // ---- TagSelector ----
 
 function TagSelector({
@@ -236,13 +238,33 @@ export default function PostEditor({ postId: initialPostId }: { postId: string |
       const url = new URL(a.href, location.href);
       if (url.origin !== location.origin) return;
       if (url.pathname === location.pathname) return;
-      if (!window.confirm("未保存の変更があります。ページを離れますか？")) {
+      if (!window.confirm(LEAVE_MESSAGE)) {
         e.preventDefault();
         e.stopPropagation();
       }
     };
     document.addEventListener("click", handler, true);
     return () => document.removeEventListener("click", handler, true);
+  }, []);
+
+  // ブラウザの「戻る」も未保存なら確認を挟む。popstate は発生後にしか通知されず
+  // キャンセルできないため、ダミーの履歴を1つ積んでおき、戻るをそこで受け止める。
+  useEffect(() => {
+    window.history.pushState({ editorGuard: true }, "", window.location.href);
+
+    const onPopState = () => {
+      // ダミーが消費された。未保存が無ければそのまま本来の戻り先へ通す。
+      if (!dirtyRef.current || window.confirm(LEAVE_MESSAGE)) {
+        window.removeEventListener("popstate", onPopState);
+        window.history.back();
+        return;
+      }
+      // 留まる：ダミーを積み直して次の「戻る」にも備える
+      window.history.pushState({ editorGuard: true }, "", window.location.href);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
   // Ctrl+S / Cmd+S で保存（公開状態は維持）

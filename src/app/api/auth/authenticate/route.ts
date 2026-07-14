@@ -1,5 +1,6 @@
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { getCredentials, saveChallenge } from "@/lib/db";
+import { serverError } from "@/lib/apiError";
 import crypto from "crypto";
 
 const RP_ID = process.env.WEBAUTHN_RP_ID || "admin.mikancel.com";
@@ -23,7 +24,6 @@ export async function POST() {
     await saveChallenge(challengeId, options.challenge);
     return Response.json({ ...options, challengeId });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    return serverError("POST /api/auth/authenticate", e);
   }
 }

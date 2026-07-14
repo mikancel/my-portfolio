@@ -16,6 +16,7 @@ vi.mock("@/lib/db", () => ({
   getPostById: vi.fn(async () => null),
   updatePost: vi.fn(async () => ({ id: 1 })),
   deletePost: vi.fn(async () => {}),
+  saveChallenge: vi.fn(async () => {}),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -32,12 +33,17 @@ vi.mock("@/lib/markdown", () => ({
   extractToc: vi.fn(() => []),
 }));
 
+vi.mock("@simplewebauthn/server", () => ({
+  generateRegistrationOptions: vi.fn(async () => ({ challenge: "c" })),
+}));
+
 import { requireAuth } from "@/lib/session";
 import { getPresignedUploadUrl } from "@/lib/r2";
 import * as blogRoute from "@/app/api/blog/route";
 import * as blogIdRoute from "@/app/api/blog/[id]/route";
 import * as renderRoute from "@/app/api/blog/render/route";
 import * as uploadRoute from "@/app/api/upload/route";
+import * as registerRoute from "@/app/api/auth/register/route";
 
 const requireAuthMock = vi.mocked(requireAuth);
 const presignMock = vi.mocked(getPresignedUploadUrl);
@@ -183,5 +189,48 @@ describe("POST /api/upload", () => {
     expect(key).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.png$/
     );
+  });
+});
+
+describe("POST /api/auth/register（パスキー登録トークン）", () => {
+  // レート制限バケットはIP単位・モジュールレベルで永続するので、テストごとにIPを変える
+  const registerReq = (ip: string, token: string) =>
+    new Request("http://t/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-forwarded-for": ip },
+      body: JSON.stringify({ token }),
+    });
+
+  beforeEach(() => {
+    process.env.REGISTRATION_TOKEN = "correct-horse-battery-staple";
+  });
+
+  it("誤ったトークンは403", async () => {
+    const res = await registerRoute.POST(registerReq("10.0.0.1", "wrong"));
+    expect(res.status).toBe(403);
+  });
+
+  it("正しいトークンは登録オプションを返す", async () => {
+    const res = await registerRoute.POST(
+      registerReq("10.0.0.2", "correct-horse-battery-staple")
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("REGISTRATION_TOKEN 未設定なら常に403（登録を無効化）", async () => {
+    delete process.env.REGISTRATION_TOKEN;
+    const res = await registerRoute.POST(registerReq("10.0.0.3", "anything"));
+    expect(res.status).toBe(403);
+  });
+
+  it("同一IPからの連続試行は6回目で429（総当たり対策）", async () => {
+    const ip = "10.0.0.4";
+    const codes: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      const res = await registerRoute.POST(registerReq(ip, "wrong"));
+      codes.push(res.status);
+    }
+    expect(codes.slice(0, 5)).toEqual([403, 403, 403, 403, 403]);
+    expect(codes[5]).toBe(429);
   });
 });

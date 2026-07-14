@@ -1,9 +1,7 @@
 import { getAllPosts, createPost, upsertTag, getAllTags } from "@/lib/db";
 import { requireAuth } from "@/lib/session";
+import { serverError } from "@/lib/apiError";
 import { revalidatePath } from "next/cache";
-
-const errorMessage = (e: unknown) =>
-  e instanceof Error ? e.message : "Unknown error";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -26,7 +24,7 @@ export async function GET(req: Request) {
     const tags = await getAllTags();
     return Response.json({ posts, tags });
   } catch (e) {
-    return Response.json({ error: errorMessage(e) }, { status: 500 });
+    return serverError("GET /api/blog", e);
   }
 }
 
@@ -59,6 +57,6 @@ export async function POST(req: Request) {
     revalidatePath("/");
     return Response.json(post, { status: 201 });
   } catch (e) {
-    return Response.json({ error: errorMessage(e) }, { status: 500 });
+    return serverError("POST /api/blog", e);
   }
 }

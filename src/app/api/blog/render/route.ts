@@ -1,5 +1,6 @@
 import { markdownToHtml, extractToc } from "@/lib/markdown";
 import { requireAuth } from "@/lib/session";
+import { serverError } from "@/lib/apiError";
 
 export async function POST(req: Request) {
   const session = await requireAuth();
@@ -11,7 +12,6 @@ export async function POST(req: Request) {
     const toc = extractToc(content || "");
     return Response.json({ html, toc });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    return serverError("POST /api/blog/render", e);
   }
 }
