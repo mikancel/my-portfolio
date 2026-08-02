@@ -6,6 +6,7 @@ import "highlight.js/styles/github-dark.css";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import ThemeMenu from "@/components/ThemeMenu";
+import Comments from "@/components/Comments";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { getColor, formatDate } from "@/lib/format";
 import type { Post } from "@/lib/types";
@@ -439,6 +440,8 @@ export default function PostClient({
           />
         </div>
       </article>
+
+      <Comments />
 
       <footer className={styles.footer}>
         <Link href="/" className={styles.footerHome}>

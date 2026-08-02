@@ -1,0 +1,26 @@
+/* 記事本文と同じカラム幅に収める（.article は max-width:720px） */
+.section {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--text);
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.note {
+  font-size: 13px;
+  color: var(--sub);
+  margin-top: 6px;
+}
+
+.giscus {
+  margin-top: 16px;
+  /* iframe読み込み前にレイアウトが飛ばないよう最低限の高さを確保 */
+  min-height: 180px;
+}
