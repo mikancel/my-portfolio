@@ -41,4 +41,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+# next-env.d.ts はコミットする。
+# これが無いと /// <reference types="next" /> が読まれず、
+# fetch の next オプション等の型拡張が効かずCIの型チェックだけが落ちる。
