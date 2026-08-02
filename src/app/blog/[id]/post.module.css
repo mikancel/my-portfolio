@@ -130,11 +130,36 @@
 }
 
 /* TOC drawer */
+/* 暗転させず、背景をぼかして目次を浮かせる。
+   ブラー半径そのものを遷移させるため、常時マウントして 0px から広げる
+   （display の切り替えや条件付きマウントでは transition が走らない）。 */
 .tocOverlay {
   position: fixed;
   inset: 0;
   z-index: 150;
-  background: rgba(0,0,0,0.3);
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
+  transition:
+    backdrop-filter 0.25s ease,
+    -webkit-backdrop-filter 0.25s ease;
+}
+
+.tocOverlayOpen {
+  pointer-events: auto;
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  backdrop-filter: blur(8px) saturate(1.1);
+}
+
+/* backdrop-filter 非対応ブラウザでは従来どおり暗転させる（無反応にしない） */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tocOverlay {
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.25s ease;
+  }
+  .tocOverlayOpen {
+    background: rgba(0, 0, 0, 0.3);
+  }
 }
 
 .tocDrawer {

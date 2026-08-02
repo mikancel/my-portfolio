@@ -415,9 +415,11 @@ export default function PostClient({
         onTocToggle={handleTocToggle}
       />
 
-      {tocOpen && (
-        <div className={styles.tocOverlay} onClick={handleTocClose} />
-      )}
+      <div
+        className={`${styles.tocOverlay} ${tocOpen ? styles.tocOverlayOpen : ""}`}
+        onClick={handleTocClose}
+        aria-hidden="true"
+      />
       <TableOfContents
         toc={toc}
         open={tocOpen}
