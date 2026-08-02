@@ -314,12 +314,16 @@ export default function PostClient({
     if (!html) return;
     const container = document.querySelector(`.${styles.content}`);
     if (!container) return;
-    const imgs = container.querySelectorAll<HTMLImageElement>("img");
-    const slides = Array.from(imgs).map((img) => ({ src: img.src }));
+    // リンクカードのサムネ・faviconは本文画像ではないのでLightbox対象外
+    const imgs = Array.from(
+      container.querySelectorAll<HTMLImageElement>("img")
+    ).filter((img) => !img.closest(".link-card"));
+    const slides = imgs.map((img) => ({ src: img.src }));
     const handler = (e: Event) => {
       const target = e.target as HTMLElement;
+      if (target.closest(".link-card")) return; // カードはリンクとして遷移させる
       if (target.tagName === "IMG") {
-        const idx = Array.from(imgs).indexOf(target as HTMLImageElement);
+        const idx = imgs.indexOf(target as HTMLImageElement);
         setLightbox({ open: true, slides, index: idx });
       }
       if (target.tagName === "VIDEO") {

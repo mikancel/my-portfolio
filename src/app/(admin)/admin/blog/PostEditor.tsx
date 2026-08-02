@@ -119,6 +119,11 @@ const TOOLBAR: ToolbarItem[] = [
   { label: "---", insert: "\n---\n", title: "水平線" },
 ];
 
+// R2へpresigned URLで直接PUTするため、Vercelの4.5MBリクエスト制限は掛からない。
+// 事故防止の上限としてのみ設ける。
+const MAX_UPLOAD_MB = 200;
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
+
 type CompressResult = { blob: Blob; contentType: string; filename: string };
 
 async function compressImage(file: File): Promise<CompressResult | null> {
@@ -391,22 +396,22 @@ export default function PostEditor({ postId: initialPostId }: { postId: string |
       let uploadContentType = file.type;
       let uploadFilename = file.name;
 
+      if (file.size > MAX_UPLOAD_BYTES) {
+        setMessage({ type: "error", text: `${file.name} は${MAX_UPLOAD_MB}MBを超えています` });
+        continue;
+      }
+
+      // GIFはcompressImage内で無加工のまま返る（WebP化するとアニメーションが死ぬため）。
+      // 動画もここを通さず、音声・コーデックを保ったまま原本をアップロードする。
       if (file.type.startsWith("image/")) {
         const compressed = await compressImage(file);
         if (!compressed) {
           setMessage({ type: "error", text: `${file.name} を読み込めませんでした` });
           continue;
         }
-        if (compressed.blob.size > 4.5 * 1024 * 1024) {
-          setMessage({ type: "error", text: `${file.name} は圧縮後も4.5MBを超えています` });
-          continue;
-        }
         uploadBlob = compressed.blob;
         uploadContentType = compressed.contentType;
         uploadFilename = compressed.filename;
-      } else if (file.size > 4.5 * 1024 * 1024) {
-        setMessage({ type: "error", text: `${file.name} は4.5MB以上のため、アップロードできません` });
-        continue;
       }
 
       const res = await fetch("/api/upload", {
