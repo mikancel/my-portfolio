@@ -65,6 +65,12 @@ const nextConfig = {
         ],
       },
       {
+        // giscus のカスタムテーマCSSは giscus.app のiframeから読み込まれるため、
+        // クロスオリジンでの取得を許可する（公開CSSなので秘匿情報は含まない）
+        source: "/giscus-:name.css",
+        headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },

@@ -16,8 +16,17 @@ const CONFIGURED = Boolean(REPO_ID && CATEGORY_ID);
 
 const GISCUS_ORIGIN = "https://giscus.app";
 
-// 自前の枠線・余白を持たせるため、giscus側は枠なしテーマを使う
-const giscusTheme = (dark: boolean) => (dark ? "noborder_dark" : "noborder_light");
+// giscusは別オリジンのiframeなので親のCSSが効かない。
+// public/ に置いたカスタムテーマCSSのURLを渡してフォントを合わせる
+// （配色は公式の枠なしテーマをそのまま流用している）。
+const giscusTheme = (dark: boolean) => {
+  const variant = dark ? "dark" : "light";
+  // giscusのiframeはhttpsなので、テーマCSSもhttpsでないと混在コンテンツで読み込まれない。
+  // ローカル開発(http)では公式テーマ名にフォールバックする（フォントは本番でのみ反映）。
+  return window.location.protocol === "https:"
+    ? `${window.location.origin}/giscus-${variant}.css`
+    : `noborder_${variant}`;
+};
 
 // useTheme の値はハイドレーション直後の1フレームだけ light に倒れるため、
 // script生成やiframe初期化のように「その瞬間の正解」が要る箇所ではDOMを直接読む

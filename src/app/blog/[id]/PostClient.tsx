@@ -287,8 +287,14 @@ export default function PostClient({
   // 読書プログレスバー（stateを使わずDOM直接更新でスクロール負荷を抑える）
   useEffect(() => {
     const onScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      const p = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
+      // ページ末尾ではなく「記事本文の終わり」で100%にする。
+      // 下にコメント欄とフッターがあるため、ページ全体基準だと読了しても満たない。
+      const article = document.querySelector(`.${styles.article}`);
+      const articleBottom = article
+        ? article.getBoundingClientRect().bottom + window.scrollY
+        : document.documentElement.scrollHeight;
+      const max = articleBottom - window.innerHeight;
+      const p = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 1;
       if (progressRef.current) {
         progressRef.current.style.transform = `scaleX(${p})`;
       }
