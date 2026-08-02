@@ -44,3 +44,6 @@ yarn-error.log*
 # next-env.d.ts はコミットする。
 # これが無いと /// <reference types="next" /> が読まれず、
 # fetch の next オプション等の型拡張が効かずCIの型チェックだけが落ちる。
+
+# Claude Code のローカル設定（アプリの動作には無関係）
+.claude/
