@@ -2,7 +2,9 @@ import "./globals.css";
 import Script from "next/script";
 import { Ubuntu_Mono } from "next/font/google";
 
-// LINE Seed JP は next/font 未収録のため Google Fonts の分割配信を継続
+// LINE Seed JP / M PLUS 1 Code は和文を含むため、
+// next/font（subsets 指定でサブセットを固定）ではなく
+// unicode-range で分割配信される Google Fonts の <link> を継続
 const ubuntuMono = Ubuntu_Mono({
   weight: ["400", "700"],
   subsets: ["latin"],
@@ -39,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=LINE+Seed+JP:wght@400;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=LINE+Seed+JP:wght@400;700;800&family=M+PLUS+1+Code:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body>
         <script dangerouslySetInnerHTML={{ __html: `

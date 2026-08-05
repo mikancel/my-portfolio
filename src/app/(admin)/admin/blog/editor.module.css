@@ -160,7 +160,9 @@
   border: none;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Consolas', 'Monaco', monospace;
+  /* M PLUS 1 Code は和欧混植の等幅。欧文専用フォントだと
+     英数字と日本語が別フォントに割れるため、ここだけ差し替え */
+  font-family: 'M PLUS 1 Code', 'Consolas', 'Monaco', monospace;
   font-size: 14px;
   line-height: 1.8;
   resize: none;
