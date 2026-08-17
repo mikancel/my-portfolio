@@ -278,6 +278,14 @@
 
 .date { font-size: 13px; color: var(--sub); margin-left: auto; }
 
+/* 更新日は投稿日より一段弱く見せる（主役は投稿日） */
+.dateUpdated {
+  font-size: 12px;
+  color: var(--sub);
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
 .title {
   font-size: 28px;
   font-weight: bold;

@@ -6,6 +6,9 @@ export type Tag = {
   slug: string;
 };
 
+/** 公開記事での使用件数を伴うタグ（一覧の絞り込みUI用） */
+export type TagWithCount = Tag & { count: number };
+
 export type Post = {
   id: number;
   title: string;

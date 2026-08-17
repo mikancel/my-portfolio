@@ -1,4 +1,4 @@
-import { getPublishedPostsMeta, getAllTags } from "@/lib/db";
+import { getPublishedPostsMeta, getPublishedTagCounts } from "@/lib/db";
 import BlogClient from "./BlogClient";
 
 // 公開記事の全メタデータを静的にキャッシュ（publish時に revalidatePath で再生成）。
@@ -8,7 +8,7 @@ export const revalidate = false;
 export default async function BlogPage() {
   const [posts, tags] = await Promise.all([
     getPublishedPostsMeta(),
-    getAllTags(),
+    getPublishedTagCounts(),
   ]);
   return (
     <BlogClient

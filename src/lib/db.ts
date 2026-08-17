@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { createClient, type Client, type Row } from "@libsql/client";
 import { deleteManyFromR2 } from "@/lib/r2";
-import type { Post, PostMeta, Tag, WebAuthnCredentialRow } from "@/lib/types";
+import type { Post, PostMeta, Tag, TagWithCount, WebAuthnCredentialRow } from "@/lib/types";
 
 const R2_BASE = "https://pic.mikancel.com/";
 const isR2Url = (u: unknown): u is string =>
@@ -285,11 +285,33 @@ async function syncPostTags(postId: number, tagIds: number[]): Promise<void> {
 
 // ---- Tags ----
 
+// 管理画面のタグ候補用。下書きでしか使っていないタグも含めて全件返す。
 export async function getAllTags(): Promise<Tag[]> {
   const db = getDb();
   const result = await db.execute("SELECT id, name, slug FROM tags ORDER BY name");
   return result.rows as unknown as Tag[];
 }
+
+// 公開ブログの絞り込みUI用。
+// 公開記事で実際に使われているタグだけを、使用件数の多い順に返す。
+// （全件返すと、下書き専用タグや使われなくなったタグを押しても0件になってしまう）
+export const getPublishedTagCounts = cache(async (): Promise<TagWithCount[]> => {
+  const db = getDb();
+  const result = await db.execute(`
+    SELECT t.id, t.name, t.slug, COUNT(pt.post_id) AS count
+    FROM tags t
+    JOIN post_tags pt ON pt.tag_id = t.id
+    JOIN posts p ON p.id = pt.post_id AND p.published = 1
+    GROUP BY t.id, t.name, t.slug
+    ORDER BY count DESC, t.name ASC
+  `);
+  return (result.rows as unknown as TagWithCount[]).map((t) => ({
+    id: Number(t.id),
+    name: t.name,
+    slug: t.slug,
+    count: Number(t.count),
+  }));
+});
 
 export async function upsertTag(name: string): Promise<Tag> {
   const db = getDb();

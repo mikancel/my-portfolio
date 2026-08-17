@@ -5,7 +5,7 @@ import Link from "next/link";
 import styles from "./blog.module.css";
 import ThemeMenu from "@/components/ThemeMenu";
 import { getColor, formatDate } from "@/lib/format";
-import type { PostMeta, Tag } from "@/lib/types";
+import type { PostMeta, TagWithCount } from "@/lib/types";
 
 function Thumbnail({ thumbnail, title }: { thumbnail: string | null; title: string }) {
   if (thumbnail) {
@@ -20,9 +20,18 @@ function Thumbnail({ thumbnail, title }: { thumbnail: string | null; title: stri
 }
 
 const PAGE = 20;
+// タグが増えても絞り込み欄が記事一覧を押し下げないよう、既定はこの件数まで
+const TAG_LIMIT = 12;
 
-export default function BlogClient({ posts, tags }: { posts: PostMeta[]; tags: Tag[] }) {
+export default function BlogClient({
+  posts,
+  tags,
+}: {
+  posts: PostMeta[];
+  tags: TagWithCount[];
+}) {
   const [activeTags, setActiveTags] = useState<number[]>([]);
+  const [tagsExpanded, setTagsExpanded] = useState(false);
   const [visible, setVisible] = useState(PAGE);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
@@ -76,27 +85,50 @@ export default function BlogClient({ posts, tags }: { posts: PostMeta[]; tags: T
 
   const shown = filtered.slice(0, visible);
 
+  // 折りたたみ時は使用頻度の高い順に TAG_LIMIT 件まで。
+  // ただし選択中のタグが隠れると解除できなくなるので、それは必ず出す。
+  const visibleTags = useMemo(() => {
+    if (tagsExpanded || tags.length <= TAG_LIMIT) return tags;
+    const head = tags.slice(0, TAG_LIMIT);
+    const hiddenSelected = tags
+      .slice(TAG_LIMIT)
+      .filter((t) => activeTags.includes(Number(t.id)));
+    return [...head, ...hiddenSelected];
+  }, [tags, tagsExpanded, activeTags]);
+
+  const hiddenCount = tags.length - visibleTags.length;
+
   return (
     <div className={styles.page}>
       <BlogHeader />
 
       <main className={styles.main}>
-        <div className={styles.tagFilter}>
+        <div className={`${styles.tagFilter} ${tagsExpanded ? styles.tagFilterExpanded : ""}`}>
           <button
             className={`${styles.tagBtn} ${activeTags.length === 0 ? styles.tagBtnActive : styles.tagBtnInactive}`}
             onClick={() => applyTags([])}
           >
             すべて
           </button>
-          {tags.map((t) => (
+          {visibleTags.map((t) => (
             <button
               key={t.id}
               className={`${styles.tagBtn} ${activeTags.includes(Number(t.id)) ? styles.tagBtnActive : ""}`}
               onClick={() => toggleTag(Number(t.id))}
             >
               {t.name}
+              <span className={styles.tagCount}>{t.count}</span>
             </button>
           ))}
+          {(hiddenCount > 0 || tagsExpanded) && (
+            <button
+              className={`${styles.tagBtn} ${styles.tagMore}`}
+              onClick={() => setTagsExpanded((v) => !v)}
+              aria-expanded={tagsExpanded}
+            >
+              {tagsExpanded ? "閉じる" : `+${hiddenCount}`}
+            </button>
+          )}
         </div>
 
         <div className={styles.postList}>

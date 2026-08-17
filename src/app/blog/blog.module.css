@@ -53,6 +53,25 @@
   margin-bottom: 32px;
 }
 
+/* 全展開してもタグの壁で記事一覧が押し流されないよう、高さを制限してスクロールさせる */
+.tagFilterExpanded {
+  max-height: 168px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* 使用件数。押す前に「何件あるタグか」が分かるようにする */
+.tagCount {
+  margin-left: 5px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.tagMore {
+  color: var(--accent);
+  border-style: dashed;
+}
+
 .tagBtn {
   padding: 4px 14px;
   border-radius: 999px;

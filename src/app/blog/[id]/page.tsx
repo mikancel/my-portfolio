@@ -33,6 +33,7 @@ export async function generateMetadata({ params }: PageProps) {
       type: "article",
       images: [image],
       ...(post.published_at ? { publishedTime: post.published_at } : {}),
+      ...(post.updated_at ? { modifiedTime: post.updated_at } : {}),
     },
     twitter: {
       card: "summary_large_image",

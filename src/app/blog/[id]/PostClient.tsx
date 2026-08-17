@@ -8,7 +8,7 @@ import "yet-another-react-lightbox/styles.css";
 import ThemeMenu from "@/components/ThemeMenu";
 import Comments from "@/components/Comments";
 import { useMediaQuery } from "@/lib/useMediaQuery";
-import { getColor, formatDate } from "@/lib/format";
+import { getColor, formatDate, parseDate } from "@/lib/format";
 import type { Post } from "@/lib/types";
 import type { TocItem } from "@/lib/markdown";
 
@@ -399,6 +399,20 @@ export default function PostClient({
     });
   }, [html]);
 
+  const publishedAt = post.published_at || post.created_at;
+  // 「更新」は、投稿日より後で かつ 日付が変わっている場合だけ出す。
+  //   ・同日なら情報量がない（updated_at は公開トグル程度でも動く）
+  //   ・updated_at が published_at より前のデータも存在するため、逆転表示を防ぐ
+  const publishedDate = parseDate(publishedAt);
+  const updatedDate = parseDate(post.updated_at);
+  const updatedLabel =
+    publishedDate &&
+    updatedDate &&
+    updatedDate > publishedDate &&
+    formatDate(post.updated_at) !== formatDate(publishedAt)
+      ? formatDate(post.updated_at)
+      : null;
+
   return (
     <div className={styles.page}>
       {/* 読書プログレスバー＋直下のガラス帯を1つの fixed ユニットに。
@@ -439,9 +453,14 @@ export default function PostClient({
                 {t.name}
               </Link>
             ))}
-            <time className={styles.date}>
-              {formatDate(post.published_at || post.created_at)}
+            <time className={styles.date} dateTime={publishedAt}>
+              {formatDate(publishedAt)}
             </time>
+            {updatedLabel && (
+              <time className={styles.dateUpdated} dateTime={post.updated_at}>
+                更新 {updatedLabel}
+              </time>
+            )}
           </div>
 
           <h1 className={styles.title}>{post.title}</h1>

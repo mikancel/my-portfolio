@@ -20,8 +20,20 @@ export function getColor(str: string): string {
   return THUMB_COLORS[Math.abs(hash) % THUMB_COLORS.length];
 }
 
+// DBには2種類の形式が混在している。
+//   published_at : JSが書くISO文字列（"2026-07-03T15:24:03.114Z" ＝ UTC明示）
+//   created_at / updated_at : SQLiteのトリガが書く "2026-07-03 15:24:03"（タイムゾーン表記なし）
+// 後者をそのまま new Date() に渡すとローカル時刻として解釈され、実際にはUTC記録なので
+// 最大9時間ずれて日付が前日になることがある（公開と同時刻なのに「更新」が前日になる等）。
+export function parseDate(dateStr: string | null | undefined): Date | null {
+  if (!dateStr) return null;
+  const naive = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$/.test(dateStr);
+  const d = new Date(naive ? `${dateStr.replace(" ", "T")}Z` : dateStr);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
+  const d = parseDate(dateStr);
+  if (!d) return "";
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
 }
