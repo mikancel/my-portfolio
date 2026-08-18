@@ -4,7 +4,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const sessionState: Record<string, unknown> = {};
 const saveMock = vi.fn();
 
-vi.mock("@/lib/session", () => ({
+// vi.mock はファイル先頭に巻き上げられるため、外側の変数を参照できない。
+// バージョンは実装から直接読む（ハードコードするとずれても気づけない）。
+vi.mock("@/lib/session", async (importOriginal) => ({
+  SESSION_VERSION: (
+    await importOriginal<typeof import("@/lib/session")>()
+  ).SESSION_VERSION,
   getSession: vi.fn(async () => ({
     get pendingMfa() {
       return sessionState.pendingMfa;
@@ -30,11 +35,20 @@ vi.mock("@/lib/session", () => ({
     set lastTotpStep(v) {
       sessionState.lastTotpStep = v;
     },
+    get v() {
+      return sessionState.v;
+    },
+    set v(value) {
+      sessionState.v = value;
+    },
     save: saveMock,
   })),
 }));
 
 import * as mfaRoute from "@/app/api/auth/mfa/route";
+// モック側と同じ値を参照する（vi.importActual はモックを迂回して実装を読む）
+const { SESSION_VERSION } =
+  await vi.importActual<typeof import("@/lib/session")>("@/lib/session");
 import { base32Encode, verifyTotp } from "@/lib/totp";
 import crypto from "crypto";
 
@@ -82,11 +96,13 @@ beforeEach(() => {
 });
 
 describe("POST /api/auth/mfa", () => {
-  it("正しいコードでログインが成立する", async () => {
+  it("正しいコードでログインが成立し、セッションに現行バージョンが入る", async () => {
     const res = await post(currentCode());
     expect(res.status).toBe(200);
     expect(sessionState.isLoggedIn).toBe(true);
     expect(sessionState.pendingMfa).toBe(false);
+    // これが無いと古い判定のまま通ってしまう
+    expect(sessionState.v).toBe(SESSION_VERSION);
     expect(saveMock).toHaveBeenCalled();
   });
 

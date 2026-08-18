@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/session";
+import { getSession, SESSION_VERSION } from "@/lib/session";
 import { verifyTotp } from "@/lib/totp";
 import { serverError } from "@/lib/apiError";
 import { rateLimit, clientIp } from "@/lib/rateLimit";
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
     session.isLoggedIn = true;
     session.pendingMfa = false;
     session.lastTotpStep = step;
+    session.v = SESSION_VERSION;
     await session.save();
 
     return Response.json({ ok: true });

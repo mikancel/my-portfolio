@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getIronSession } from "iron-session";
-import type { SessionData } from "@/lib/session";
+import { isFullyAuthenticated, type SessionData } from "@/lib/session";
 
 const secret = process.env.SESSION_SECRET;
 if (!secret && process.env.NODE_ENV === "production") {
@@ -49,14 +49,14 @@ export async function proxy(req: NextRequest) {
     // TOTP入力画面は「Google認証済み・2要素目待ち」の人だけ通す
     if (pathname === "/admin/mfa") {
       if (session.pendingMfa) return res;
-      if (session.isLoggedIn) {
+      if (isFullyAuthenticated(session)) {
         return NextResponse.redirect(new URL("/admin/blog", req.url));
       }
       return NextResponse.redirect(new URL("/admin/login", req.url));
     }
 
-    // 2要素目が未完了ならTOTP入力へ戻す（管理画面は見せない）
-    if (!session.isLoggedIn) {
+    // 2要素目が未完了、またはMFA導入前の古いセッションならログインし直させる
+    if (!isFullyAuthenticated(session)) {
       const dest = session.pendingMfa ? "/admin/mfa" : "/admin/login";
       return NextResponse.redirect(new URL(dest, req.url));
     }
