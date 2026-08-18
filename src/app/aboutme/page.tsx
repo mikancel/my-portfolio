@@ -268,11 +268,16 @@ export default function AboutMe() {
         <div ref={refStack} className={`${styles.fade} ${visStack ? styles.fadeIn : ""}`}>
           <p className={styles.labelLight}>&#8212; 02 &#47; Stack</p>
           {[
-            ["frontend", "Next.js / React"],
-            ["backend",  "Next.js API Routes"],
+            ["language", "TypeScript"],
+            ["frontend", "Next.js 16 (App Router) / React 19"],
+            ["styling",  "CSS Modules"],
+            ["backend",  "Route Handlers"],
             ["database", "Turso (libSQL)"],
             ["storage",  "Cloudflare R2"],
-            ["auth",     "Google OAuth / iron-session"],
+            ["auth",     "Google OAuth + TOTP / iron-session"],
+            ["content",  "remark / rehype"],
+            ["comments", "giscus"],
+            ["ci",       "GitHub Actions / Vitest"],
             ["deploy",   "Vercel"],
           ].map(([category, techs]) => (
             <div key={category} className={styles.stackItem}>
