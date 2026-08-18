@@ -44,10 +44,12 @@ beforeEach(() => {
 });
 
 describe("GET /api/auth/google/callback", () => {
-  it("stateが一致すればログインできる", async () => {
+  it("stateが一致してもGoogleだけでは完了せず、TOTP入力へ回される", async () => {
     const res = await callback.GET(callbackReq({ code: "c", state: STATE }, STATE));
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toContain("/admin/blog");
+    // Google認証だけで /admin/blog に入れてはいけない
+    expect(res.headers.get("location")).toContain("/admin/mfa");
+    expect(res.headers.get("location")).not.toContain("/admin/blog");
     expect(res.headers.get("set-cookie")).toContain("admin_session=");
   });
 

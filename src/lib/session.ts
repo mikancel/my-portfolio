@@ -2,9 +2,14 @@ import { getIronSession, type IronSession } from "iron-session";
 import { cookies } from "next/headers";
 
 export type SessionData = {
+  /** 2要素とも通過した状態。これが true のときだけ管理APIを許可する */
   isLoggedIn?: boolean;
   /** ログインに使ったGoogleアカウント（画面表示・監査用） */
   email?: string;
+  /** Google認証は通ったがTOTP待ちの状態 */
+  pendingMfa?: boolean;
+  /** 使用済みTOTPのステップ番号。同じコードの使い回しを防ぐ */
+  lastTotpStep?: number;
 };
 
 export function getSessionSecret(): string {

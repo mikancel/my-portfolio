@@ -55,14 +55,17 @@ export async function GET(req: NextRequest) {
     if (!user.emailVerified) return back(req, "unverified");
     if (!isAllowedEmail(user.email)) return back(req, "forbidden");
 
-    // リダイレクト応答にCookieを確実に載せるため、
-    // cookies()経由ではなく req/res を直接渡す形式で保存する
-    const dest = new URL("/admin/blog", new URL(req.url).origin);
+    // ここではまだログイン成立とせず、TOTP入力へ回す（2要素目）。
+    // isLoggedIn は /api/auth/mfa を通過して初めて true になる。
+    const dest = new URL("/admin/mfa", new URL(req.url).origin);
     const res = NextResponse.redirect(dest, 302);
     res.headers.append("Set-Cookie", CLEAR_STATE);
 
+    // リダイレクト応答にCookieを確実に載せるため、
+    // cookies()経由ではなく req/res を直接渡す形式で保存する
     const session = await getIronSession<SessionData>(req, res, sessionOptions);
-    session.isLoggedIn = true;
+    session.isLoggedIn = false;
+    session.pendingMfa = true;
     session.email = user.email;
     await session.save();
 

@@ -45,8 +45,20 @@ export async function proxy(req: NextRequest) {
   try {
     const res = NextResponse.next();
     const session = await getIronSession<SessionData>(req, res, SESSION_OPTIONS);
-    if (!session.isLoggedIn) {
+
+    // TOTP入力画面は「Google認証済み・2要素目待ち」の人だけ通す
+    if (pathname === "/admin/mfa") {
+      if (session.pendingMfa) return res;
+      if (session.isLoggedIn) {
+        return NextResponse.redirect(new URL("/admin/blog", req.url));
+      }
       return NextResponse.redirect(new URL("/admin/login", req.url));
+    }
+
+    // 2要素目が未完了ならTOTP入力へ戻す（管理画面は見せない）
+    if (!session.isLoggedIn) {
+      const dest = session.pendingMfa ? "/admin/mfa" : "/admin/login";
+      return NextResponse.redirect(new URL(dest, req.url));
     }
     return res;
   } catch {
