@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { createClient, type Client, type Row } from "@libsql/client";
 import { deleteManyFromR2 } from "@/lib/r2";
-import type { Post, PostMeta, Tag, TagWithCount, WebAuthnCredentialRow } from "@/lib/types";
+import type { Post, PostMeta, Tag, TagWithCount } from "@/lib/types";
 
 const R2_BASE = "https://pic.mikancel.com/";
 const isR2Url = (u: unknown): u is string =>
@@ -118,21 +118,26 @@ export async function getPublishedPostsMeta(): Promise<PostMeta[]> {
   return (await attachTags(result.rows)) as PostMeta[];
 }
 
+// 常にDBを読む版。更新処理の前後で読む場合はこちらを使う
+// （cache版だと更新後の読み出しが更新前の結果を返してしまう）。
+async function fetchPostById(
+  id: number,
+  publishedOnly = true
+): Promise<Post | null> {
+  const db = getDb();
+  const result = await db.execute({
+    sql: `SELECT p.* FROM posts p
+        WHERE p.id = ? ${publishedOnly ? "AND p.published = 1" : ""}`,
+    args: [id],
+  });
+  if (!result.rows.length) return null;
+  const [post] = (await attachTags(result.rows)) as Post[];
+  return post;
+}
+
 // React cache() でメモ化。同一リクエスト内（generateMetadata とページ本体）で
 // 同じ getPostById(id) を呼んでもDBクエリは1回に統合される。
-export const getPostById = cache(
-  async (id: number, publishedOnly = true): Promise<Post | null> => {
-    const db = getDb();
-    const result = await db.execute({
-      sql: `SELECT p.* FROM posts p
-          WHERE p.id = ? ${publishedOnly ? "AND p.published = 1" : ""}`,
-      args: [id],
-    });
-    if (!result.rows.length) return null;
-    const [post] = (await attachTags(result.rows)) as Post[];
-    return post;
-  }
-);
+export const getPostById = cache(fetchPostById);
 
 // 公開記事のIDを列挙（generateStaticParams 用）
 export async function getPublishedPostIds(): Promise<number[]> {
@@ -165,14 +170,27 @@ export async function createPost({
   tagIds?: number[];
 }): Promise<Post | null> {
   const db = getDb();
-  const publishedAt = published ? new Date().toISOString() : null;
+  const now = new Date().toISOString();
+  const publishedAt = published ? now : null;
+  // created_at/updated_at もDBのデフォルト（datetime('now','localtime')）に任せない。
+  // この式はサーバーのタイムゾーン次第で意味が変わり（Turso=UTC / ローカル=JST）、
+  // タイムゾーン表記も付かないため、アプリ側でISO(UTC)に統一する。
   const result = await db.execute({
-    sql: `INSERT INTO posts (title, content, thumbnail, published, published_at) VALUES (?,?,?,?,?)`,
-    args: [title, content, thumbnail ?? null, published ? 1 : 0, publishedAt],
+    sql: `INSERT INTO posts (title, content, thumbnail, published, published_at, created_at, updated_at)
+          VALUES (?,?,?,?,?,?,?)`,
+    args: [
+      title,
+      content,
+      thumbnail ?? null,
+      published ? 1 : 0,
+      publishedAt,
+      now,
+      now,
+    ],
   });
   const id = Number(result.lastInsertRowid);
   if (tagIds.length) await syncPostTags(id, tagIds);
-  return getPostById(id, false);
+  return fetchPostById(id, false);
 }
 
 function extractR2Urls(markdown: string | null | undefined): string[] {
@@ -198,7 +216,7 @@ export async function updatePost(
   }
 ): Promise<Post | null> {
   const db = getDb();
-  const current = await getPostById(id, false);
+  const current = await fetchPostById(id, false);
   if (!current) throw new Error("Post not found");
 
   const newPublished = published !== undefined ? published : current.published;
@@ -207,14 +225,18 @@ export async function updatePost(
       ? new Date().toISOString()
       : current.published_at;
 
+  // updated_at はDBトリガーに任せず、ここで明示的に入れる。
+  // 本番(Turso)にはトリガーが存在せず、更新日時が作成時のまま固まっていたため。
+  // 形式も published_at と揃えてISO(UTC)にする。
   await db.execute({
-    sql: `UPDATE posts SET title=?, content=?, thumbnail=?, published=?, published_at=? WHERE id=?`,
+    sql: `UPDATE posts SET title=?, content=?, thumbnail=?, published=?, published_at=?, updated_at=? WHERE id=?`,
     args: [
       title ?? current.title,
       content ?? current.content,
       thumbnail !== undefined ? thumbnail : current.thumbnail,
       newPublished ? 1 : 0,
       publishedAt,
+      new Date().toISOString(),
       id,
     ],
   });
@@ -236,7 +258,7 @@ export async function updatePost(
   const removed = [...oldUrls].filter((u) => !newUrls.has(u));
   if (removed.length) await deleteManyFromR2(removed.map(r2UrlToKey));
 
-  return getPostById(id, false);
+  return fetchPostById(id, false);
 }
 
 export async function deletePost(id: number): Promise<void> {
@@ -325,79 +347,4 @@ export async function upsertTag(name: string): Promise<Tag> {
     args: [name],
   });
   return result.rows[0] as unknown as Tag;
-}
-
-// ---- WebAuthn ----
-
-export async function saveChallenge(
-  id: string,
-  challenge: string,
-  ttlSeconds = 300
-): Promise<void> {
-  const db = getDb();
-  const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
-  await db.execute({
-    sql: "INSERT OR REPLACE INTO webauthn_challenges (id, challenge, expires_at) VALUES (?,?,?)",
-    args: [id, challenge, expiresAt],
-  });
-}
-
-export async function getAndDeleteChallenge(id: string): Promise<string | null> {
-  const db = getDb();
-  const result = await db.execute({
-    sql: "SELECT id, challenge, expires_at FROM webauthn_challenges WHERE id = ?",
-    args: [id],
-  });
-  const row = result.rows[0] as unknown as
-    | { id: string; challenge: string; expires_at: string }
-    | undefined;
-  if (!row) return null;
-  await db.execute({ sql: "DELETE FROM webauthn_challenges WHERE id = ?", args: [id] });
-  if (new Date(row.expires_at) < new Date()) return null;
-  return row.challenge;
-}
-
-export async function saveCredential({
-  id,
-  credentialId,
-  publicKey,
-  counter,
-}: {
-  id: string;
-  credentialId: string;
-  publicKey: string;
-  counter: number;
-}): Promise<void> {
-  const db = getDb();
-  await db.execute({
-    sql: "INSERT OR REPLACE INTO webauthn_credentials (id, credential_id, public_key, counter) VALUES (?,?,?,?)",
-    args: [id, credentialId, publicKey, counter],
-  });
-}
-
-export async function getCredentials(): Promise<WebAuthnCredentialRow[]> {
-  const db = getDb();
-  const result = await db.execute(
-    "SELECT id, credential_id, public_key, counter FROM webauthn_credentials"
-  );
-  return result.rows as unknown as WebAuthnCredentialRow[];
-}
-
-export async function updateCredentialCounter(
-  credentialId: string,
-  counter: number
-): Promise<void> {
-  const db = getDb();
-  await db.execute({
-    sql: "UPDATE webauthn_credentials SET counter = ? WHERE credential_id = ?",
-    args: [counter, credentialId],
-  });
-}
-
-export async function hasCredentials(): Promise<boolean> {
-  const db = getDb();
-  const result = await db.execute(
-    "SELECT COUNT(*) as cnt FROM webauthn_credentials"
-  );
-  return Number(result.rows[0].cnt) > 0;
 }

@@ -24,9 +24,3 @@ export type Post = {
 // 一覧用（本文なし）
 export type PostMeta = Omit<Post, "content">;
 
-export type WebAuthnCredentialRow = {
-  id: string;
-  credential_id: string;
-  public_key: string;
-  counter: number;
-};

@@ -50,12 +50,12 @@ db.exec(`
     expires_at TEXT NOT NULL
   );
 
-  CREATE TRIGGER IF NOT EXISTS posts_updated_at
-    AFTER UPDATE ON posts FOR EACH ROW
-    BEGIN
-      UPDATE posts SET updated_at = datetime('now','localtime') WHERE id = OLD.id;
-    END;
 `);
+
+// updated_at はアプリ側(updatePost)で明示的に入れる。
+// 本番のTursoにはトリガーが無く、ここだけトリガーを作ると
+// ローカルと本番で更新日時の挙動・形式が食い違うため作らない。
+db.exec(`DROP TRIGGER IF EXISTS posts_updated_at;`);
 
 console.log("✅ Migration complete:", DB_PATH);
 db.close();

@@ -272,7 +272,7 @@ export default function AboutMe() {
             ["backend",  "Next.js API Routes"],
             ["database", "Turso (libSQL)"],
             ["storage",  "Cloudflare R2"],
-            ["auth",     "WebAuthn / iron-session"],
+            ["auth",     "Google OAuth / iron-session"],
             ["deploy",   "Vercel"],
           ].map(([category, techs]) => (
             <div key={category} className={styles.stackItem}>

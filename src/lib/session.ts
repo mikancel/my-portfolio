@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 
 export type SessionData = {
   isLoggedIn?: boolean;
+  /** ログインに使ったGoogleアカウント（画面表示・監査用） */
+  email?: string;
 };
 
 export function getSessionSecret(): string {
@@ -16,13 +18,16 @@ export function getSessionSecret(): string {
   return secret;
 }
 
-const sessionOptions = {
+export const sessionOptions = {
   password: getSessionSecret(),
   cookieName: "admin_session",
   cookieOptions: {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
-    sameSite: "strict" as const,
+    // Googleからのリダイレクトで戻ってくる経路ではStrictだとCookieが送られず
+    // ログイン直後に未ログイン扱いになるため Lax にする。
+    // 更新系APIはPOST/PATCH/DELETE＋JSONなのでLaxでもCSRFは防げる。
+    sameSite: "lax" as const,
     maxAge: 60 * 60 * 24,
   },
 };
