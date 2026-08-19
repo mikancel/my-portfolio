@@ -276,11 +276,20 @@
   .tag:hover { background: var(--accent); color: #fff; }
 }
 
-.date { font-size: 13px; color: var(--sub); margin-left: auto; }
+/* 投稿日・更新日をまとめて右端に寄せる */
+.dates {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.date { font-size: 13px; color: var(--sub); }
 
 /* 更新日は投稿日より一段弱く見せる（主役は投稿日） */
 .dateUpdated {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--sub);
   opacity: 0.75;
   white-space: nowrap;

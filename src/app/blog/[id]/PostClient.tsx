@@ -453,14 +453,17 @@ export default function PostClient({
                 {t.name}
               </Link>
             ))}
-            <time className={styles.date} dateTime={publishedAt}>
-              {formatDate(publishedAt)}
-            </time>
-            {updatedLabel && (
-              <time className={styles.dateUpdated} dateTime={post.updated_at}>
-                更新 {updatedLabel}
+            {/* 日付はまとめて右端に。投稿日を主、更新日をその下に従として置く */}
+            <div className={styles.dates}>
+              <time className={styles.date} dateTime={publishedAt}>
+                {formatDate(publishedAt)}
               </time>
-            )}
+              {updatedLabel && (
+                <time className={styles.dateUpdated} dateTime={post.updated_at}>
+                  {updatedLabel} 更新
+                </time>
+              )}
+            </div>
           </div>
 
           <h1 className={styles.title}>{post.title}</h1>
